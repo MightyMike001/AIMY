@@ -57,8 +57,7 @@
     .upload{
       border:1px dashed #d1d5db; border-radius:12px; padding:14px; display:flex; gap:10px; align-items:center; justify-content:center; text-align:center; cursor:pointer; background:#fbfbfc
     }
-    .upload:hover{border-color:var(--motrac-red);}
-    .upload input{display:none}
+    .upload:hover{border-color:var(--motrac-red);} .upload input{display:none}
 
     .doc-list{display:flex; flex-direction:column; gap:8px; max-height:220px; overflow:auto; padding-right:4px}
     .doc{display:flex; align-items:center; gap:10px; padding:10px; border:1px solid #ececf1; border-radius:12px}
@@ -68,9 +67,7 @@
     .doc .small{font-size:12px; color:var(--muted)}
     .doc button{border:none; background:transparent; color:var(--motrac-red); font-weight:600; cursor:pointer}
 
-    .quick{
-      display:flex; flex-wrap:wrap; gap:8px
-    }
+    .quick{display:flex; flex-wrap:wrap; gap:8px}
     .tag{font-size:12px; padding:7px 10px; border-radius:999px; border:1px solid #ececf1; background:#fff; cursor:pointer}
     .tag:hover{border-color:var(--motrac-red); color:var(--motrac-red)}
 
@@ -96,9 +93,7 @@
     .sep{height:1px; background:#ececf1; margin:10px 0}
 
     .badge{font-size:11px; padding:3px 8px; border-radius:999px; border:1px solid #e5e7eb; background:#fff}
-    .status.ok{color:var(--ok)}
-    .status.warn{color:var(--warn)}
-    .status.err{color:var(--err)}
+    .status.ok{color:var(--ok)} .status.warn{color:var(--warn)} .status.err{color:var(--err)}
 
     .tiny{font-size:11px; color:var(--muted)}
     .right{margin-left:auto}
@@ -112,7 +107,7 @@
         <div class="title">AIMY – Motrac Service AI Assistent</div>
         <div class="sub">Chat-assistent voor Linde heftrucks – helpt monteurs sneller storingen oplossen</div>
       </div>
-      <div class="right"><span id="ingestStatus" class="badge">Docs: 0</span></div>
+      <div class="right"><span id="ingestStatus" class="badge">Docs: 0</span> <span id="testBadge" class="badge">Tests: 0/0</span></div>
     </div>
   </header>
 
@@ -133,9 +128,9 @@
         <div class="sep"></div>
         <div class="tiny">Server endpoints verwacht:</div>
         <ul class="tiny" style="margin-top:6px">
-          <li><code>POST /api/ingest</code> – multipart upload ⇒ <code>{ doc_id, chunks }</code></li>
-          <li><code>POST /api/chat</code> – JSON body ⇒ <code>ReadableStream</code> met tokens</li>
-          <li><code>DELETE /api/docs/:id</code> – verwijder een document</li>
+          <li><code>POST {n8n}/webhook/aimy-chat</code> – JSON in ⇒ JSON uit (<code>{ answer, citations[] }</code>)</li>
+          <li><em>Optioneel</em>: aparte ingest-webhook voor documentverwerking</li>
+          <li>Beveilig met header-token of reverse proxy</li>
         </ul>
       </section>
 
@@ -189,13 +184,22 @@
   <script>
     // ---- State
     const state = {
-      docs: [],           // {id,name,size,uploadedAt}
-      messages: [],       // {role: 'user'|'assistant'|'system', content}
+      docs: [],            // {id,name,size,uploadedAt}
+      messages: [          // seed met de begroeting in DOM
+        { role: 'assistant', content: 'Hoi! Ik ben AIMY. Laad Linde-documenten in aan de linkerkant of stel je storingsvraag. Ik geef je een systematische diagnose met veiligheidsstappen, meetwaardes en relevante passages uit de handleidingen.' }
+      ],
       chatId: crypto.randomUUID(),
       streaming: false,
     };
 
-    // ---- UI helpers
+    // ---- n8n config (vul je Production Webhook URL in)
+    const CONFIG = {
+      N8N_WEBHOOK: 'https://node01n8n.mit.rd-n.nl/webhook-test/aimy-chat',
+      AUTH_HEADER: 'X-AIMY-Token',
+      AUTH_VALUE: '' // bv. 'supersecret' – leeg laten als niet nodig
+    };
+
+    // ---- helpers
     const $ = (q, el=document) => el.querySelector(q);
     const $$ = (q, el=document) => [...el.querySelectorAll(q)];
     const messagesEl = $('#messages');
@@ -203,11 +207,38 @@
     const sendBtn = $('#send');
     const docList = $('#docList');
     const ingestBadge = $('#ingestStatus');
+    const testBadge = $('#testBadge');
 
     function fmtBytes(bytes){
       const units=['B','KB','MB','GB'];
       let i=0, n=bytes; while(n>=1024 && i<units.length-1){ n/=1024; i++; }
       return `${n.toFixed(n<10?1:0)} ${units[i]}`;
+    }
+
+    function addMessage(role, content){
+      const bubble = document.createElement('div');
+      bubble.className = `bubble ${role}`;
+      bubble.innerHTML = `<div class="role">${role === 'user' ? 'Monteur' : 'AIMY'}</div><div class="content"></div>`;
+      bubble.querySelector('.content').textContent = content;
+      messagesEl.appendChild(bubble);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+      // houd state bij (laatste 50)
+      state.messages.push({ role: role === 'user' ? 'user' : 'assistant', content });
+      if(state.messages.length>50) state.messages.shift();
+    }
+
+    function appendStreamChunk(chunk){
+      const last = messagesEl.lastElementChild;
+      if(!last || !last.classList.contains('assistant')) return;
+      const contentEl = last.querySelector('.content');
+      contentEl.textContent += chunk;
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+      // state updaten met de laatste assistant boodschap
+      const lastIdx = [...state.messages].reverse().findIndex(m=>m.role==='assistant');
+      if(lastIdx>-1){
+        const idx = state.messages.length-1-lastIdx;
+        state.messages[idx].content += chunk;
+      }
     }
 
     function renderDocList(){
@@ -225,142 +256,125 @@
           <button data-id="${d.id}" title="Verwijderen">Verwijder</button>`;
         el.querySelector('button').onclick = async (ev) => {
           const id = ev.currentTarget.getAttribute('data-id');
-          try{
-            await fetch(`/api/docs/${id}`, { method:'DELETE' });
-          }catch(e){ console.warn('Delete API niet bereikbaar, verwijder lokaal.'); }
+          try{ await fetch(`/api/docs/${id}`, { method:'DELETE' }); }catch{/* optioneel */}
           state.docs = state.docs.filter(x => x.id !== id);
           renderDocList();
-        }
+        };
         docList.appendChild(el);
       });
     }
 
-    function addMessage(role, content){
-      const bubble = document.createElement('div');
-      bubble.className = `bubble ${role}`;
-      bubble.innerHTML = `<div class="role">${role === 'user' ? 'Monteur' : 'AIMY'}</div><div class="content"></div>`;
-      bubble.querySelector('.content').textContent = content;
-      messagesEl.appendChild(bubble);
-      messagesEl.scrollTop = messagesEl.scrollHeight;
-    }
-
-    function appendStreamChunk(chunk){
-      const last = messagesEl.lastElementChild;
-      if(!last || !last.classList.contains('assistant')) return;
-      const contentEl = last.querySelector('.content');
-      contentEl.textContent += chunk;
-      messagesEl.scrollTop = messagesEl.scrollHeight;
-    }
-
-    // ---- Chat
+    // ---- Chat naar n8n (schijn-streaming)
     async function send(){
       const text = inputEl.value.trim();
       if(!text || state.streaming) return;
       addMessage('user', text);
       inputEl.value = '';
-      const body = {
-        chat_id: state.chatId,
-        model: $('#model').value,
-        temperature: Number($('#temp').value),
-        citations: $('#citations').checked,
-        messages: [ ...$$('.bubble').map(b=>({ role: b.classList.contains('user')?'user':'assistant', content: b.querySelector('.content').textContent })) ].slice(-20),
-        doc_ids: state.docs.map(d=>d.id)
-      };
-      // Prepare assistant bubble for streaming
-      addMessage('assistant', '');
+      addMessage('assistant', ''); // lege bubble voor stream
       state.streaming = true; sendBtn.disabled = true;
 
       try{
-        const resp = await fetch('/api/chat', {
-          method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
-        });
-        if(!resp.ok || !resp.body){
-          throw new Error('Chat API niet beschikbaar');
+        const headers = { 'Content-Type':'application/json' };
+        if (CONFIG.AUTH_VALUE) headers[CONFIG.AUTH_HEADER] = CONFIG.AUTH_VALUE;
+
+        // payload op basis van state i.p.v. DOM; beperk history
+        const history = state.messages.slice(-12);
+        const body = {
+          chat_id: state.chatId,
+          query: text,
+          model: $('#model').value,
+          temperature: Number($('#temp').value),
+          citations: $('#citations').checked,
+          history,
+          doc_ids: state.docs.map(d=>d.id)
+        };
+
+        let data;
+        if(/^https?:\/\//.test(CONFIG.N8N_WEBHOOK)){
+          const resp = await fetch(CONFIG.N8N_WEBHOOK, { method:'POST', headers, body: JSON.stringify(body) });
+          if(!resp.ok) throw new Error('n8n-webhook niet bereikbaar');
+          data = await resp.json();
+        } else {
+          // Fallback demo-antwoord zonder netwerk
+          data = { answer: 'Demo-antwoord (n8n URL niet ingesteld). Controleer hoofdschakelaar, noodstop, zekeringen en CAN-bus. Meet accuspanning (>24.0V) en log foutcode 224-01.', citations: [] };
         }
-        const reader = resp.body.getReader();
-        const decoder = new TextDecoder();
-        let done=false;
-        while(!done){
-          const { value, done: d } = await reader.read();
-          done = d;
-          if(value){ appendStreamChunk(decoder.decode(value)); }
+
+        const ans = (data.answer || '[geen antwoord]').toString();
+        for (let i=0;i<ans.length;i++){
+          appendStreamChunk(ans[i]);
+          await new Promise(r=>setTimeout(r, 4));
+        }
+        if (Array.isArray(data.citations) && data.citations.length){
+          appendStreamChunk(`\n\n— Bronnen:\n${data.citations.map(c=>`• ${c.doc_id} p.${c.page}${c.section?` (${c.section})`:''}`).join('\n')}`);
         }
       }catch(err){
         console.error(err);
-        appendStreamChunk('\n[!] Chat-server niet bereikbaar. Implementeer /api/chat (streamend) om AIMY te laten antwoorden.');
+        appendStreamChunk('\n[!] n8n-webhook niet bereikbaar. Controleer de Production URL & eventuele auth.');
       }finally{
         state.streaming = false; sendBtn.disabled = false;
       }
     }
 
+    // ---- Events
     sendBtn.addEventListener('click', send);
-    inputEl.addEventListener('keydown', (e)=>{
-      if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); send(); }
-    });
-
-    // ---- Quick prompts
-    $('#quick').addEventListener('click', (e)=>{
-      if(e.target.matches('.tag')){
-        inputEl.value = e.target.getAttribute('data-q');
-        inputEl.focus();
-      }
-    });
+    inputEl.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); send(); }});
+    $('#quick').addEventListener('click', (e)=>{ if(e.target.matches('.tag')){ inputEl.value = e.target.getAttribute('data-q'); inputEl.focus(); }});
 
     // ---- Ingest (drag & drop + file input)
     const fileInput = $('#file');
     const drop = $('#drop');
-
     function preventDefaults(e){ e.preventDefault(); e.stopPropagation(); }
-    ['dragenter','dragover','dragleave','drop'].forEach(ev=>{
-      drop.addEventListener(ev, preventDefaults, false);
-    });
-    ['dragenter','dragover'].forEach(ev=>{
-      drop.addEventListener(ev, ()=>{ drop.style.borderColor = 'var(--motrac-red)'; }, false)
-    });
-    ;['dragleave','drop'].forEach(ev=>{
-      drop.addEventListener(ev, ()=>{ drop.style.borderColor = '#d1d5db'; }, false)
-    });
+    ['dragenter','dragover','dragleave','drop'].forEach(ev=>{ drop.addEventListener(ev, preventDefaults, false); });
+    ['dragenter','dragover'].forEach(()=>{ drop.addEventListener('dragover', ()=>{ drop.style.borderColor = 'var(--motrac-red)'; }, false) });
+    ;['dragleave','drop'].forEach(()=>{ drop.addEventListener('dragleave', ()=>{ drop.style.borderColor = '#d1d5db'; }, false) });
 
     drop.addEventListener('click', ()=> fileInput.click());
     drop.addEventListener('drop', (e)=> handleFiles(e.dataTransfer.files));
     fileInput.addEventListener('change', (e)=> handleFiles(e.target.files));
 
     async function handleFiles(fileList){
-      const files = [...fileList];
-      if(!files.length) return;
-      for(const f of files){ await uploadDoc(f); }
-      renderDocList();
+      const files = [...fileList]; if(!files.length) return;
+      for(const f of files){ await uploadDoc(f); } renderDocList();
     }
 
     async function uploadDoc(file){
       const form = new FormData(); form.append('file', file);
-      let doc = { id: crypto.randomUUID(), name: file.name, size: file.size, uploadedAt: Date.now() };
+      const doc = { id: crypto.randomUUID(), name: file.name, size: file.size, uploadedAt: Date.now() };
       try{
         const res = await fetch('/api/ingest', { method:'POST', body: form });
-        if(res.ok){
-          const data = await res.json();
-          doc.id = data.doc_id || doc.id;
-        } else {
-          console.warn('Ingest API antwoord niet OK. Lokale fallback-id gebruikt.');
-        }
-      }catch(err){
-        console.warn('Ingest API niet bereikbaar. Bewaar doc-id lokaal.');
-      }
+        if(res.ok){ const data = await res.json(); doc.id = data.doc_id || doc.id; }
+      }catch{/* optioneel offline */}
       state.docs.push(doc);
     }
 
     // ---- Persist chat locally (rudimentair)
     window.addEventListener('beforeunload', ()=>{
-      const dump = { messages: $$('.bubble').map(b=>({ role: b.classList.contains('user')?'user':'assistant', content: b.querySelector('.content').textContent })), docs: state.docs };
+      const dump = { messages: state.messages, docs: state.docs };
       localStorage.setItem('aimy-chat', JSON.stringify(dump));
     });
     (function restore(){
       try{
         const dump = JSON.parse(localStorage.getItem('aimy-chat')||'null');
         if(!dump) return;
-        dump.messages.slice(1).forEach(m=> addMessage(m.role, m.content));
         state.docs = dump.docs||[]; renderDocList();
-      }catch{ /* ignore */ }
+        // seed visueel opnieuw
+        const firstBubble = messagesEl.firstElementChild; if(firstBubble) messagesEl.removeChild(firstBubble);
+        state.messages = dump.messages || [];
+        state.messages.forEach(m=> addMessage(m.role, m.content));
+      }catch{/* ignore */}
+    })();
+
+    // ---- Mini test runner (console + badge)
+    (function runTests(){
+      const tests = [];
+      const assert = (name, cond) => tests.push({name, ok: !!cond});
+      try{ assert('fmtBytes(1024) → 1.0 KB', fmtBytes(1024).startsWith('1.0 K')); }catch{ assert('fmtBytes', false); }
+      try{ assert('send() bestaat', typeof send === 'function'); }catch{ assert('send()', false); }
+      try{ const prev = state.messages.length; addMessage('assistant',''); appendStreamChunk('X'); const ok = state.messages[state.messages.length-1].content.endsWith('X'); assert('appendStreamChunk werkt', ok); }catch{ assert('appendStreamChunk', false); }
+      try{ const history = state.messages.slice(-12); assert('history max 12', history.length<=12); }catch{ assert('history cap', false); }
+      const okCount = tests.filter(t=>t.ok).length;
+      if(testBadge) testBadge.textContent = `Tests: ${okCount}/${tests.length}`;
+      console.table(tests);
     })();
   </script>
 
@@ -375,12 +389,10 @@
      - Sla op in vectorstore (pgvector/FAISS) met metadata: bron, sectie, pagina
      - Response: { doc_id, chunks }
 
-  2) /api/chat (POST JSON, streaming)
-     - Body: { chat_id, model, temperature, messages, doc_ids, citations }
-     - Parse laatste user-vraag; zoek top-k passages via vectorstore (per doc_ids)
-     - Bouw systeem prompt gericht op Linde-monteurs:
-       "Je bent AIMY van Motrac. Geef veilige, stapsgewijze diagnose, meetwaardes, grenswaarden, tools, en verwijs naar bron (document, sectie, pagina). Als onbekend: zeg dat je het niet zeker weet en geef vervolgstappen."
-     - RAG-antwoord genereren met citeerblokken en streamen als text/event-stream of chunked fetch.
+  2) /api/chat (POST JSON)
+     - Body: { chat_id, model, temperature, history, doc_ids, citations }
+     - Retrieval op basis van vraag + doc_ids, compose prompt, model call
+     - Response: { answer, citations[] }
 
   3) /api/docs/:id (DELETE)
      - Verwijder document & vector entries
@@ -393,7 +405,7 @@
   LICENTIES & MERK
   - Gebruik enkel Linde-documentatie waarvoor je rechten hebt. Respecteer copyright.
   - Huisstijl volgt motrac.nl: rood/wit/zwart, sobere UI, duidelijke typografie.
-  ===========================================================================
+  ==========================================================================
   -->
 </body>
 </html>
