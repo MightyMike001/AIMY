@@ -86,6 +86,8 @@
     .btn{display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:12px; border:1px solid #e5e7eb; background:#111; color:#fff; font-weight:600; cursor:pointer}
     .btn.primary{background:var(--motrac-red); border-color:var(--motrac-red)}
     .btn.primary:hover{background:var(--motrac-red-600)}
+    .btn.secondary{background:#fff; color:var(--ink);}
+    .btn.secondary:hover{background:#f3f4f6;}
     .btn:disabled{opacity:.5; cursor:not-allowed}
 
     .row{display:flex; gap:8px; align-items:center}
@@ -199,17 +201,19 @@
 
       <div class="composer">
         <textarea id="input" placeholder="Beschrijf de storing… (bijv. Linde E20 toont foutcode 224-01 na koude start)" rows="1"></textarea>
+        <button id="newChat" class="btn secondary" type="button">Nieuwe chat</button>
         <button id="send" class="btn primary">Stuur</button>
       </div>
     </section>
   </main>
 
   <script>
+    const GREETING = 'Hoi! Ik ben AIMY. Laad Linde-documenten in aan de linkerkant of stel je storingsvraag. Ik geef je een systematische diagnose met veiligheidsstappen, meetwaardes en relevante passages uit de handleidingen.';
     // ---- State
     const state = {
       docs: [],            // {id,name,size,uploadedAt}
       messages: [          // seed met de begroeting in DOM
-        { role: 'assistant', content: 'Hoi! Ik ben AIMY. Laad Linde-documenten in aan de linkerkant of stel je storingsvraag. Ik geef je een systematische diagnose met veiligheidsstappen, meetwaardes en relevante passages uit de handleidingen.' }
+        { role: 'assistant', content: GREETING }
       ],
       chatId: crypto.randomUUID(),
       streaming: false,
@@ -253,6 +257,7 @@
     const messagesEl = $('#messages');
     const inputEl = $('#input');
     const sendBtn = $('#send');
+    const newChatBtn = $('#newChat');
     const docList = $('#docList');
     const ingestBadge = $('#ingestStatus');
     const testBadge = $('#testBadge');
@@ -289,6 +294,18 @@
         const idx = state.messages.length-1-lastIdx;
         state.messages[idx].content += chunk;
       }
+    }
+
+    function resetChat(){
+      if(state.streaming) return;
+      state.chatId = crypto.randomUUID();
+      state.messages = [];
+      messagesEl.innerHTML = '';
+      addMessage('assistant', GREETING);
+      if(inputEl){ inputEl.value = ''; inputEl.focus(); }
+      try{
+        localStorage.removeItem('aimy-chat');
+      }catch{/* ignore */}
     }
 
     if(webhookInput){
@@ -337,7 +354,7 @@
       addMessage('user', text);
       inputEl.value = '';
       addMessage('assistant', ''); // lege bubble voor stream
-      state.streaming = true; sendBtn.disabled = true;
+      state.streaming = true; sendBtn.disabled = true; if(newChatBtn) newChatBtn.disabled = true;
 
       try{
         const headers = { 'Content-Type':'application/json' };
@@ -377,13 +394,14 @@
         console.error(err);
         appendStreamChunk('\n[!] n8n-webhook niet bereikbaar. Controleer de Production URL & eventuele auth.');
       }finally{
-        state.streaming = false; sendBtn.disabled = false;
+        state.streaming = false; sendBtn.disabled = false; if(newChatBtn) newChatBtn.disabled = false;
       }
     }
 
     // ---- Events
     sendBtn.addEventListener('click', send);
     inputEl.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); send(); }});
+    if(newChatBtn){ newChatBtn.addEventListener('click', resetChat); }
     $('#quick').addEventListener('click', (e)=>{ if(e.target.matches('.tag')){ inputEl.value = e.target.getAttribute('data-q'); inputEl.focus(); }});
 
     // ---- Ingest (drag & drop + file input)
@@ -436,6 +454,7 @@
       const assert = (name, cond) => tests.push({name, ok: !!cond});
       try{ assert('fmtBytes(1024) → 1.0 KB', fmtBytes(1024).startsWith('1.0 K')); }catch{ assert('fmtBytes', false); }
       try{ assert('send() bestaat', typeof send === 'function'); }catch{ assert('send()', false); }
+      try{ assert('resetChat() bestaat', typeof resetChat === 'function'); }catch{ assert('resetChat()', false); }
       try{ const prev = state.messages.length; addMessage('assistant',''); appendStreamChunk('X'); const ok = state.messages[state.messages.length-1].content.endsWith('X'); assert('appendStreamChunk werkt', ok); }catch{ assert('appendStreamChunk', false); }
       try{ const history = state.messages.slice(-12); assert('history max 12', history.length<=12); }catch{ assert('history cap', false); }
       const okCount = tests.filter(t=>t.ok).length;
