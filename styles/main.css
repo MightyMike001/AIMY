@@ -278,6 +278,9 @@ header{
 .modal-card{max-width:420px;width:100%;position:relative}
 .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .settings-body{display:flex;flex-direction:column;gap:10px}
+.settings-section{display:flex;flex-direction:column;gap:10px}
+.settings-section h4{margin:0;font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#111}
+.settings-list{margin:6px 0 0 16px;padding:0 0 0 4px;display:flex;flex-direction:column;gap:4px}
 
 @media (max-width: 900px){
   .title{font-size:17px}
