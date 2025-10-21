@@ -17,6 +17,14 @@ export function createChatController({ state, config, elements }){
     addMessage(state, messagesEl, 'user', text);
     inputEl.value = '';
     const history = state.messages.slice(-MAX_HISTORY);
+    const docIds = state.docs.map(d => d.id);
+    const sharedQueryFields = {
+      query: text,
+      question: text,
+      prompt: text,
+      input: text,
+      text
+    };
     addMessage(state, messagesEl, 'assistant', '');
     state.streaming = true;
     sendBtn.disabled = true;
@@ -31,11 +39,15 @@ export function createChatController({ state, config, elements }){
       }
       const body = {
         chat_id: state.chatId,
-        query: text,
+        ...sharedQueryFields,
         temperature: tempInput ? Number(tempInput.value) : 0.2,
         citations: citationsCheckbox ? citationsCheckbox.checked : false,
         history,
-        doc_ids: state.docs.map(d => d.id)
+        messages: history,
+        chat_history: history,
+        history_text: history.map(m => `${m.role}: ${m.content}`).join('\n'),
+        doc_ids: docIds,
+        documents: docIds
       };
 
       let data;
