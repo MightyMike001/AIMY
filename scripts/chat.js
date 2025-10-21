@@ -25,7 +25,7 @@ export function createChatController({ state, config, elements }){
       input: text,
       text
     };
-    addMessage(state, messagesEl, 'assistant', '');
+    addMessage(state, messagesEl, 'assistant', '', { loading: true });
     state.streaming = true;
     sendBtn.disabled = true;
     if(newChatBtn){
