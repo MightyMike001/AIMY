@@ -88,6 +88,7 @@
     .btn.primary:hover{background:var(--motrac-red-600)}
     .btn.secondary{background:#fff; color:var(--ink);}
     .btn.secondary:hover{background:#f3f4f6;}
+    .btn.small{padding:8px 12px; font-size:13px}
     .btn:disabled{opacity:.5; cursor:not-allowed}
 
     .row{display:flex; gap:8px; align-items:center}
@@ -114,6 +115,12 @@
 
     .tiny{font-size:11px; color:var(--muted)}
     .right{margin-left:auto}
+
+    .modal{position:fixed; inset:0; display:flex; align-items:center; justify-content:center; padding:24px; background:rgba(11,13,15,.45); z-index:50}
+    .modal[aria-hidden="true"]{display:none}
+    .modal-card{max-width:420px; width:100%; position:relative}
+    .modal-header{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px}
+    .settings-body{display:flex; flex-direction:column; gap:10px}
   </style>
 </head>
 <body>
@@ -124,7 +131,11 @@
         <div class="title">AIMY – Motrac Service AI Assistent</div>
         <div class="sub">Chat-assistent voor Linde heftrucks – helpt monteurs sneller storingen oplossen</div>
       </div>
-      <div class="right"><span id="ingestStatus" class="badge">Docs: 0</span> <span id="testBadge" class="badge">Tests: 0/0</span></div>
+      <div class="right" style="display:flex; align-items:center; gap:10px">
+        <button id="settingsBtn" class="btn secondary small" type="button">Instellingen</button>
+        <span id="ingestStatus" class="badge">Docs: 0</span>
+        <span id="testBadge" class="badge">Tests: 0/0</span>
+      </div>
     </div>
   </header>
 
@@ -161,33 +172,6 @@
         </div>
       </section>
 
-      <section class="card panel">
-        <h3>Context</h3>
-        <div class="row" style="justify-content:space-between">
-          <span class="tiny">Model</span>
-          <select id="model" class="badge">
-            <option>gpt-4.1</option>
-            <option selected>gpt-4o</option>
-            <option>gpt-4.1-mini</option>
-          </select>
-        </div>
-        <div class="row" style="margin-top:8px; justify-content:space-between">
-          <span class="tiny">Temperatuur</span>
-          <input id="temp" type="range" min="0" max="1" step="0.1" value="0.2"/>
-        </div>
-        <div class="row" style="margin-top:8px; align-items:flex-start">
-          <span class="tiny" style="padding-top:6px">Webhook</span>
-          <input id="webhookUrl" class="input grow" type="url" placeholder="https://…/aimy-chat"/>
-        </div>
-        <div class="row" style="margin-top:8px; align-items:flex-start">
-          <span class="tiny" style="padding-top:6px">API-token</span>
-          <input id="authToken" class="input grow" type="text" placeholder="optioneel" autocomplete="off"/>
-        </div>
-        <div class="row" style="margin-top:8px; justify-content:space-between">
-          <span class="tiny">Bronverwijzing</span>
-          <label class="row tiny"><input id="citations" type="checkbox" checked style="margin-right:6px"/> Toon secties & paginanummers</label>
-        </div>
-      </section>
     </aside>
 
     <!-- Chat -->
@@ -206,6 +190,34 @@
       </div>
     </section>
   </main>
+
+  <div id="settingsModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="modal-card card panel">
+      <div class="modal-header">
+        <h3 id="settingsTitle" style="margin:0">Instellingen</h3>
+        <button id="closeSettings" class="btn secondary small" type="button">Sluiten</button>
+      </div>
+      <div class="settings-body">
+        <div class="row" style="justify-content:space-between">
+          <span class="tiny">Temperatuur</span>
+          <input id="temp" type="range" min="0" max="1" step="0.1" value="0.2"/>
+        </div>
+        <div class="row" style="align-items:flex-start">
+          <span class="tiny" style="padding-top:6px">Webhook</span>
+          <input id="webhookUrl" class="input grow" type="url" placeholder="https://…/aimy-chat"/>
+        </div>
+        <div class="row" style="align-items:flex-start">
+          <span class="tiny" style="padding-top:6px">API-token</span>
+          <input id="authToken" class="input grow" type="text" placeholder="optioneel" autocomplete="off"/>
+        </div>
+        <div class="row" style="justify-content:space-between">
+          <span class="tiny">Bronverwijzing</span>
+          <label class="row tiny"><input id="citations" type="checkbox" checked style="margin-right:6px"/> Toon secties & paginanummers</label>
+        </div>
+        <p class="tiny" style="margin:4px 0 0">Deze instellingen worden lokaal opgeslagen in je browser.</p>
+      </div>
+    </div>
+  </div>
 
   <script>
     const GREETING = 'Hoi! Ik ben AIMY. Laad Linde-documenten in aan de linkerkant of stel je storingsvraag. Ik geef je een systematische diagnose met veiligheidsstappen, meetwaardes en relevante passages uit de handleidingen.';
@@ -263,6 +275,9 @@
     const testBadge = $('#testBadge');
     const webhookInput = $('#webhookUrl');
     const authInput = $('#authToken');
+    const settingsBtn = $('#settingsBtn');
+    const settingsModal = $('#settingsModal');
+    const closeSettingsBtn = $('#closeSettings');
 
     function fmtBytes(bytes){
       const units=['B','KB','MB','GB'];
@@ -324,6 +339,18 @@
       });
     }
 
+    function openSettings(){
+      if(settingsModal){
+        settingsModal.setAttribute('aria-hidden', 'false');
+      }
+    }
+
+    function closeSettings(){
+      if(settingsModal){
+        settingsModal.setAttribute('aria-hidden', 'true');
+      }
+    }
+
     function renderDocList(){
       ingestBadge.textContent = `Docs: ${state.docs.length}`;
       if(!state.docs.length){ docList.innerHTML = '<div class="hint">Nog niets geladen</div>'; return; }
@@ -365,7 +392,6 @@
         const body = {
           chat_id: state.chatId,
           query: text,
-          model: $('#model').value,
           temperature: Number($('#temp').value),
           citations: $('#citations').checked,
           history,
@@ -403,6 +429,16 @@
     inputEl.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); send(); }});
     if(newChatBtn){ newChatBtn.addEventListener('click', resetChat); }
     $('#quick').addEventListener('click', (e)=>{ if(e.target.matches('.tag')){ inputEl.value = e.target.getAttribute('data-q'); inputEl.focus(); }});
+    if(settingsBtn){ settingsBtn.addEventListener('click', openSettings); }
+    if(closeSettingsBtn){ closeSettingsBtn.addEventListener('click', closeSettings); }
+    if(settingsModal){
+      settingsModal.addEventListener('click', (e)=>{ if(e.target === settingsModal) closeSettings(); });
+      document.addEventListener('keydown', (e)=>{
+        if(e.key === 'Escape' && settingsModal.getAttribute('aria-hidden') === 'false'){
+          closeSettings();
+        }
+      });
+    }
 
     // ---- Ingest (drag & drop + file input)
     const fileInput = $('#file');
