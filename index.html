@@ -26,26 +26,6 @@
   <main class="wrap">
     <!-- Sidebar -->
     <aside class="side">
-      <section class="card panel" id="ingestPanel">
-        <h3>Documenten laden</h3>
-        <label class="upload" id="drop">
-          <input id="file" type="file" accept=".pdf,.txt,.doc,.docx,.md,.html,.json,.csv" multiple />
-          <div>
-            <div><strong>Sleep & laat los</strong> of klik om Linde-documenten te selecteren</div>
-            <div class="hint">PDF's, handleidingen, service bulletins, storingscodes, etc.</div>
-          </div>
-        </label>
-        <div class="sep"></div>
-        <div class="doc-list" id="docList"></div>
-        <div class="sep"></div>
-        <div class="tiny">Server endpoints verwacht:</div>
-        <ul class="tiny" style="margin-top:6px">
-          <li><code>POST {n8n}/webhook/aimy-chat</code> – JSON in ⇒ JSON uit (<code>{ answer, citations[] }</code>)</li>
-          <li><em>Optioneel</em>: aparte ingest-webhook voor documentverwerking</li>
-          <li>Beveilig met header-token of reverse proxy</li>
-        </ul>
-      </section>
-
       <section class="card panel">
         <h3>Snelle hulp</h3>
         <div class="quick" id="quick">
@@ -101,6 +81,25 @@
           <label class="row tiny"><input id="citations" type="checkbox" checked style="margin-right:6px"/> Toon secties & paginanummers</label>
         </div>
         <p class="tiny" style="margin:4px 0 0">Deze instellingen worden lokaal opgeslagen in je browser.</p>
+        <div class="sep"></div>
+        <div class="settings-section">
+          <h4>Documenten laden</h4>
+          <p class="tiny">Sleep & laat los of klik om Linde-documenten te selecteren. Documenten worden lokaal bijgehouden.</p>
+          <label class="upload" id="drop">
+            <input id="file" type="file" accept=".pdf,.txt,.doc,.docx,.md,.html,.json,.csv" multiple />
+            <div>
+              <div><strong>Bestanden toevoegen</strong></div>
+              <div class="hint">PDF's, handleidingen, service bulletins, storingscodes, etc.</div>
+            </div>
+          </label>
+          <div class="doc-list" id="docList"></div>
+          <div class="tiny">Server endpoints verwacht:</div>
+          <ul class="tiny settings-list">
+            <li><code>POST {n8n}/webhook/aimy-chat</code> – JSON in ⇒ JSON uit (<code>{ answer, citations[] }</code>)</li>
+            <li><em>Optioneel</em>: aparte ingest-webhook voor documentverwerking</li>
+            <li>Beveilig met header-token of reverse proxy</li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>
