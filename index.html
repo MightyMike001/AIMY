@@ -238,6 +238,7 @@
       AUTH_VALUE: '' // bv. 'supersecret' – leeg laten als niet nodig
     };
     const CONFIG_KEY = 'aimy-config';
+    const CHAT_KEY = 'aimy-chat';
     try{
       const storedConfig = JSON.parse(localStorage.getItem(CONFIG_KEY) || 'null');
       if(storedConfig){
@@ -285,16 +286,21 @@
       return `${n.toFixed(n<10?1:0)} ${units[i]}`;
     }
 
-    function addMessage(role, content){
+    function addMessage(role, content, opts = {}){
+      const { track = true, scroll = true } = opts;
       const bubble = document.createElement('div');
       bubble.className = `bubble ${role}`;
       bubble.innerHTML = `<div class="role">${role === 'user' ? 'Monteur' : 'AIMY'}</div><div class="content"></div>`;
       bubble.querySelector('.content').textContent = content;
       messagesEl.appendChild(bubble);
-      messagesEl.scrollTop = messagesEl.scrollHeight;
-      // houd state bij (laatste 50)
-      state.messages.push({ role: role === 'user' ? 'user' : 'assistant', content });
-      if(state.messages.length>50) state.messages.shift();
+      if(scroll){
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+      }
+      if(track){
+        // houd state bij (laatste 50)
+        state.messages.push({ role: role === 'user' ? 'user' : 'assistant', content });
+        if(state.messages.length>50) state.messages.shift();
+      }
     }
 
     function appendStreamChunk(chunk){
@@ -319,7 +325,7 @@
       addMessage('assistant', GREETING);
       if(inputEl){ inputEl.value = ''; inputEl.focus(); }
       try{
-        localStorage.removeItem('aimy-chat');
+        localStorage.removeItem(CHAT_KEY);
       }catch{/* ignore */}
     }
 
@@ -469,18 +475,32 @@
 
     // ---- Persist chat locally (rudimentair)
     window.addEventListener('beforeunload', ()=>{
-      const dump = { messages: state.messages, docs: state.docs };
-      localStorage.setItem('aimy-chat', JSON.stringify(dump));
+      try{
+        const dump = { messages: state.messages, docs: state.docs, chatId: state.chatId };
+        localStorage.setItem(CHAT_KEY, JSON.stringify(dump));
+      }catch{/* ignore */}
     });
     (function restore(){
       try{
-        const dump = JSON.parse(localStorage.getItem('aimy-chat')||'null');
+        const raw = localStorage.getItem(CHAT_KEY);
+        if(!raw) return;
+        const dump = JSON.parse(raw);
         if(!dump) return;
-        state.docs = dump.docs||[]; renderDocList();
-        // seed visueel opnieuw
-        const firstBubble = messagesEl.firstElementChild; if(firstBubble) messagesEl.removeChild(firstBubble);
-        state.messages = dump.messages || [];
-        state.messages.forEach(m=> addMessage(m.role, m.content));
+        state.docs = Array.isArray(dump.docs) ? dump.docs.map(d => ({ ...d })) : [];
+        renderDocList();
+        if(typeof dump.chatId === 'string' && dump.chatId){
+          state.chatId = dump.chatId;
+        }
+        const restoredMessages = Array.isArray(dump.messages) ? dump.messages.slice(-50) : [];
+        if(restoredMessages.length){
+          state.messages = restoredMessages.map(m => ({
+            role: m && m.role === 'user' ? 'user' : 'assistant',
+            content: (m && m.content != null) ? String(m.content) : ''
+          }));
+          messagesEl.innerHTML = '';
+          state.messages.forEach(m=> addMessage(m.role, m.content, { track: false, scroll: false }));
+          messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
       }catch{/* ignore */}
     })();
 
