@@ -60,11 +60,18 @@
 
     <!-- Chat -->
     <section class="card chat" aria-label="Chat">
+      <div class="chat-toolbar">
+        <button id="newChat" class="btn secondary icon" type="button" aria-label="Nieuwe chat">
+          <span class="sr-only">Nieuwe chat</span>
+          <svg aria-hidden="true" viewBox="0 0 20 20" focusable="false">
+            <path d="M10 3a7 7 0 1 0 0 14 7 7 0 0 0 0-14Zm0-2a9 9 0 1 1 0 18 9 9 0 0 1 0-18Zm1 5v3h3v2h-3v3H9v-3H6V9h3V6h2Z" fill="currentColor"/>
+          </svg>
+        </button>
+      </div>
       <div id="messages" class="messages"></div>
 
       <div class="composer">
         <textarea id="input" placeholder="Beschrijf de storing… (bijv. Linde E20 toont foutcode 224-01 na koude start)" rows="1"></textarea>
-        <button id="newChat" class="btn secondary" type="button">Nieuwe chat</button>
         <button id="send" class="btn primary">Stuur</button>
       </div>
     </section>
