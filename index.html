@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>AIMY – Motrac Service AI Assistent</title>
+  <meta name="description" content="Motrac Service AI Assistent: AIMY helpt monteurs storingen oplossen met ingeladen Linde-documentatie."/>
+  <!-- Design tokens (Motrac/Linde geïnspireerd) -->
+  <style>
+    :root{
+      --motrac-red:#E2001A; /* Motrac/Linde rood */
+      --motrac-red-600:#c00015;
+      --motrac-red-700:#9b0011;
+      --ink:#0b0d0f;        
+      --ink-2:#202428;
+      --ink-3:#30363d;
+      --bg:#f7f7f8;
+      --card:#ffffff;
+      --muted:#6b7280;
+      --ring: rgba(226,0,26,.35);
+      --ok:#15803d;
+      --warn:#b45309;
+      --err:#b91c1c;
+      --shadow:0 10px 20px rgba(0,0,0,.06),0 2px 6px rgba(0,0,0,.05);
+      --radius:14px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      color:var(--ink); background:var(--bg);
+    }
+    header{
+      position:sticky; top:0; z-index:10; backdrop-filter:saturate(1.1) blur(6px);
+      background:linear-gradient(180deg, rgba(255,255,255,.85), rgba(255,255,255,.75));
+      border-bottom:1px solid #ececf1;
+    }
+    .bar{max-width:1200px; margin:0 auto; padding:14px 18px; display:flex; align-items:center; gap:14px}
+    .logo{
+      width:34px;height:34px;border-radius:8px; display:grid;place-items:center; font-weight:800; color:#fff; background:var(--motrac-red);
+      box-shadow:inset 0 -3px 10px rgba(0,0,0,.2);
+    }
+    .title{font-size:18px; font-weight:750; letter-spacing:.2px}
+    .sub{font-size:13px; color:var(--muted)}
+
+    .wrap{max-width:1200px; margin:18px auto; padding:0 18px; display:grid; grid-template-columns:320px 1fr; gap:18px}
+    @media (max-width: 980px){ .wrap{grid-template-columns:1fr} .side{order:2}}
+
+    .card{background:var(--card); border:1px solid #ececf1; border-radius:var(--radius); box-shadow:var(--shadow)}
+
+    .side{ display:flex; flex-direction:column; gap:14px}
+
+    .panel{padding:14px}
+    .panel h3{margin:0 0 10px; font-size:14px; text-transform:uppercase; letter-spacing:.08em; color:#111}
+    .hint{font-size:12px; color:var(--muted)}
+
+    .upload{
+      border:1px dashed #d1d5db; border-radius:12px; padding:14px; display:flex; gap:10px; align-items:center; justify-content:center; text-align:center; cursor:pointer; background:#fbfbfc
+    }
+    .upload:hover{border-color:var(--motrac-red);}
+    .upload input{display:none}
+
+    .doc-list{display:flex; flex-direction:column; gap:8px; max-height:220px; overflow:auto; padding-right:4px}
+    .doc{display:flex; align-items:center; gap:10px; padding:10px; border:1px solid #ececf1; border-radius:12px}
+    .doc .dot{width:9px;height:9px;border-radius:99px;background:var(--motrac-red)}
+    .doc .meta{flex:1}
+    .doc .name{font-size:13px; font-weight:600;}
+    .doc .small{font-size:12px; color:var(--muted)}
+    .doc button{border:none; background:transparent; color:var(--motrac-red); font-weight:600; cursor:pointer}
+
+    .quick{
+      display:flex; flex-wrap:wrap; gap:8px
+    }
+    .tag{font-size:12px; padding:7px 10px; border-radius:999px; border:1px solid #ececf1; background:#fff; cursor:pointer}
+    .tag:hover{border-color:var(--motrac-red); color:var(--motrac-red)}
+
+    /* Chat area */
+    .chat{display:flex; flex-direction:column; height:calc(100dvh - 140px)}
+    .messages{flex:1; overflow:auto; padding:16px; display:flex; flex-direction:column; gap:12px}
+    .bubble{max-width:850px; padding:12px 14px; border-radius:14px; border:1px solid #ececf1; background:#fff}
+    .bubble.assistant{border-color:#ffe2e5; background:linear-gradient(180deg,#fff, #fff8f8)}
+    .bubble.user{align-self:flex-end; background:#f8fafc}
+    .bubble .role{font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:6px}
+    .bubble .content{white-space:pre-wrap; line-height:1.5}
+
+    .composer{padding:12px; border-top:1px solid #ececf1; display:flex; gap:10px; align-items:center}
+    .composer textarea{flex:1; resize:vertical; max-height:180px; min-height:42px; padding:12px 12px; border:1px solid #e5e7eb; border-radius:12px; font:inherit; box-shadow:inset 0 1px 0 rgba(0,0,0,.02)}
+    .composer textarea:focus{outline:none; border-color:var(--motrac-red); box-shadow:0 0 0 4px var(--ring)}
+    .btn{display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:12px; border:1px solid #e5e7eb; background:#111; color:#fff; font-weight:600; cursor:pointer}
+    .btn.primary{background:var(--motrac-red); border-color:var(--motrac-red)}
+    .btn.primary:hover{background:var(--motrac-red-600)}
+    .btn:disabled{opacity:.5; cursor:not-allowed}
+
+    .row{display:flex; gap:8px; align-items:center}
+    .grow{flex:1}
+    .sep{height:1px; background:#ececf1; margin:10px 0}
+
+    .badge{font-size:11px; padding:3px 8px; border-radius:999px; border:1px solid #e5e7eb; background:#fff}
+    .status.ok{color:var(--ok)}
+    .status.warn{color:var(--warn)}
+    .status.err{color:var(--err)}
+
+    .tiny{font-size:11px; color:var(--muted)}
+    .right{margin-left:auto}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="bar">
+      <div class="logo" aria-hidden>AI</div>
+      <div>
+        <div class="title">AIMY – Motrac Service AI Assistent</div>
+        <div class="sub">Chat-assistent voor Linde heftrucks – helpt monteurs sneller storingen oplossen</div>
+      </div>
+      <div class="right"><span id="ingestStatus" class="badge">Docs: 0</span></div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- Sidebar -->
+    <aside class="side">
+      <section class="card panel" id="ingestPanel">
+        <h3>Documenten laden</h3>
+        <label class="upload" id="drop">
+          <input id="file" type="file" accept=".pdf,.txt,.doc,.docx,.md,.html,.json,.csv" multiple />
+          <div>
+            <div><strong>Sleep & laat los</strong> of klik om Linde-documenten te selecteren</div>
+            <div class="hint">PDF's, handleidingen, service bulletins, storingscodes, etc.</div>
+          </div>
+        </label>
+        <div class="sep"></div>
+        <div class="doc-list" id="docList"></div>
+        <div class="sep"></div>
+        <div class="tiny">Server endpoints verwacht:</div>
+        <ul class="tiny" style="margin-top:6px">
+          <li><code>POST /api/ingest</code> – multipart upload ⇒ <code>{ doc_id, chunks }</code></li>
+          <li><code>POST /api/chat</code> – JSON body ⇒ <code>ReadableStream</code> met tokens</li>
+          <li><code>DELETE /api/docs/:id</code> – verwijder een document</li>
+        </ul>
+      </section>
+
+      <section class="card panel">
+        <h3>Snelle hulp</h3>
+        <div class="quick" id="quick">
+          <button class="tag" data-q="Diagnoseer stap-voor-stap een hydrauliek-lek. Noem symptomen, checks, veiligheid en te gebruiken meetwaarden.">Hydrauliek-lek</button>
+          <button class="tag" data-q="Foutcode 224-01 op Linde E20: leg uit wat het betekent, welke sensoren betrokken zijn en geef een systematische diagnose volgorde met meetwaardes.">Foutcode 224-01</button>
+          <button class="tag" data-q="Truck start niet: geef checklist (accu, BMS, noodstop, hoofdschakelaar, zekeringen, CAN, stuurcontroller). Voeg grenswaarden toe.">Startproblemen</button>
+          <button class="tag" data-q="Maak een samenvatting van documentatie over mast-tilt afwijking en kalibratieprocedure. Voeg waarschuwingen toe.">Mast tilt</button>
+        </div>
+      </section>
+
+      <section class="card panel">
+        <h3>Context</h3>
+        <div class="row" style="justify-content:space-between">
+          <span class="tiny">Model</span>
+          <select id="model" class="badge">
+            <option>gpt-4.1</option>
+            <option selected>gpt-4o</option>
+            <option>gpt-4.1-mini</option>
+          </select>
+        </div>
+        <div class="row" style="margin-top:8px; justify-content:space-between">
+          <span class="tiny">Temperatuur</span>
+          <input id="temp" type="range" min="0" max="1" step="0.1" value="0.2"/>
+        </div>
+        <div class="row" style="margin-top:8px; justify-content:space-between">
+          <span class="tiny">Bronverwijzing</span>
+          <label class="row tiny"><input id="citations" type="checkbox" checked style="margin-right:6px"/> Toon secties & paginanummers</label>
+        </div>
+      </section>
+    </aside>
+
+    <!-- Chat -->
+    <section class="card chat" aria-label="Chat">
+      <div id="messages" class="messages">
+        <div class="bubble assistant">
+          <div class="role">AIMY</div>
+          <div class="content">Hoi! Ik ben AIMY. Laad Linde-documenten in aan de linkerkant of stel je storingsvraag. Ik geef je een systematische diagnose met veiligheidsstappen, meetwaardes en relevante passages uit de handleidingen.</div>
+        </div>
+      </div>
+
+      <div class="composer">
+        <textarea id="input" placeholder="Beschrijf de storing… (bijv. Linde E20 toont foutcode 224-01 na koude start)" rows="1"></textarea>
+        <button id="send" class="btn primary">Stuur</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // ---- State
+    const state = {
+      docs: [],           // {id,name,size,uploadedAt}
+      messages: [],       // {role: 'user'|'assistant'|'system', content}
+      chatId: crypto.randomUUID(),
+      streaming: false,
+    };
+
+    // ---- UI helpers
+    const $ = (q, el=document) => el.querySelector(q);
+    const $$ = (q, el=document) => [...el.querySelectorAll(q)];
+    const messagesEl = $('#messages');
+    const inputEl = $('#input');
+    const sendBtn = $('#send');
+    const docList = $('#docList');
+    const ingestBadge = $('#ingestStatus');
+
+    function fmtBytes(bytes){
+      const units=['B','KB','MB','GB'];
+      let i=0, n=bytes; while(n>=1024 && i<units.length-1){ n/=1024; i++; }
+      return `${n.toFixed(n<10?1:0)} ${units[i]}`;
+    }
+
+    function renderDocList(){
+      ingestBadge.textContent = `Docs: ${state.docs.length}`;
+      if(!state.docs.length){ docList.innerHTML = '<div class="hint">Nog niets geladen</div>'; return; }
+      docList.innerHTML = '';
+      state.docs.forEach(d => {
+        const el = document.createElement('div');
+        el.className = 'doc';
+        el.innerHTML = `<div class="dot"></div>
+          <div class="meta">
+            <div class="name">${d.name}</div>
+            <div class="small">${fmtBytes(d.size)} • ${new Date(d.uploadedAt).toLocaleString()}</div>
+          </div>
+          <button data-id="${d.id}" title="Verwijderen">Verwijder</button>`;
+        el.querySelector('button').onclick = async (ev) => {
+          const id = ev.currentTarget.getAttribute('data-id');
+          try{
+            await fetch(`/api/docs/${id}`, { method:'DELETE' });
+          }catch(e){ console.warn('Delete API niet bereikbaar, verwijder lokaal.'); }
+          state.docs = state.docs.filter(x => x.id !== id);
+          renderDocList();
+        }
+        docList.appendChild(el);
+      });
+    }
+
+    function addMessage(role, content){
+      const bubble = document.createElement('div');
+      bubble.className = `bubble ${role}`;
+      bubble.innerHTML = `<div class="role">${role === 'user' ? 'Monteur' : 'AIMY'}</div><div class="content"></div>`;
+      bubble.querySelector('.content').textContent = content;
+      messagesEl.appendChild(bubble);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    function appendStreamChunk(chunk){
+      const last = messagesEl.lastElementChild;
+      if(!last || !last.classList.contains('assistant')) return;
+      const contentEl = last.querySelector('.content');
+      contentEl.textContent += chunk;
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    // ---- Chat
+    async function send(){
+      const text = inputEl.value.trim();
+      if(!text || state.streaming) return;
+      addMessage('user', text);
+      inputEl.value = '';
+      const body = {
+        chat_id: state.chatId,
+        model: $('#model').value,
+        temperature: Number($('#temp').value),
+        citations: $('#citations').checked,
+        messages: [ ...$$('.bubble').map(b=>({ role: b.classList.contains('user')?'user':'assistant', content: b.querySelector('.content').textContent })) ].slice(-20),
+        doc_ids: state.docs.map(d=>d.id)
+      };
+      // Prepare assistant bubble for streaming
+      addMessage('assistant', '');
+      state.streaming = true; sendBtn.disabled = true;
+
+      try{
+        const resp = await fetch('/api/chat', {
+          method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
+        });
+        if(!resp.ok || !resp.body){
+          throw new Error('Chat API niet beschikbaar');
+        }
+        const reader = resp.body.getReader();
+        const decoder = new TextDecoder();
+        let done=false;
+        while(!done){
+          const { value, done: d } = await reader.read();
+          done = d;
+          if(value){ appendStreamChunk(decoder.decode(value)); }
+        }
+      }catch(err){
+        console.error(err);
+        appendStreamChunk('\n[!] Chat-server niet bereikbaar. Implementeer /api/chat (streamend) om AIMY te laten antwoorden.');
+      }finally{
+        state.streaming = false; sendBtn.disabled = false;
+      }
+    }
+
+    sendBtn.addEventListener('click', send);
+    inputEl.addEventListener('keydown', (e)=>{
+      if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); send(); }
+    });
+
+    // ---- Quick prompts
+    $('#quick').addEventListener('click', (e)=>{
+      if(e.target.matches('.tag')){
+        inputEl.value = e.target.getAttribute('data-q');
+        inputEl.focus();
+      }
+    });
+
+    // ---- Ingest (drag & drop + file input)
+    const fileInput = $('#file');
+    const drop = $('#drop');
+
+    function preventDefaults(e){ e.preventDefault(); e.stopPropagation(); }
+    ['dragenter','dragover','dragleave','drop'].forEach(ev=>{
+      drop.addEventListener(ev, preventDefaults, false);
+    });
+    ['dragenter','dragover'].forEach(ev=>{
+      drop.addEventListener(ev, ()=>{ drop.style.borderColor = 'var(--motrac-red)'; }, false)
+    });
+    ;['dragleave','drop'].forEach(ev=>{
+      drop.addEventListener(ev, ()=>{ drop.style.borderColor = '#d1d5db'; }, false)
+    });
+
+    drop.addEventListener('click', ()=> fileInput.click());
+    drop.addEventListener('drop', (e)=> handleFiles(e.dataTransfer.files));
+    fileInput.addEventListener('change', (e)=> handleFiles(e.target.files));
+
+    async function handleFiles(fileList){
+      const files = [...fileList];
+      if(!files.length) return;
+      for(const f of files){ await uploadDoc(f); }
+      renderDocList();
+    }
+
+    async function uploadDoc(file){
+      const form = new FormData(); form.append('file', file);
+      let doc = { id: crypto.randomUUID(), name: file.name, size: file.size, uploadedAt: Date.now() };
+      try{
+        const res = await fetch('/api/ingest', { method:'POST', body: form });
+        if(res.ok){
+          const data = await res.json();
+          doc.id = data.doc_id || doc.id;
+        } else {
+          console.warn('Ingest API antwoord niet OK. Lokale fallback-id gebruikt.');
+        }
+      }catch(err){
+        console.warn('Ingest API niet bereikbaar. Bewaar doc-id lokaal.');
+      }
+      state.docs.push(doc);
+    }
+
+    // ---- Persist chat locally (rudimentair)
+    window.addEventListener('beforeunload', ()=>{
+      const dump = { messages: $$('.bubble').map(b=>({ role: b.classList.contains('user')?'user':'assistant', content: b.querySelector('.content').textContent })), docs: state.docs };
+      localStorage.setItem('aimy-chat', JSON.stringify(dump));
+    });
+    (function restore(){
+      try{
+        const dump = JSON.parse(localStorage.getItem('aimy-chat')||'null');
+        if(!dump) return;
+        dump.messages.slice(1).forEach(m=> addMessage(m.role, m.content));
+        state.docs = dump.docs||[]; renderDocList();
+      }catch{ /* ignore */ }
+    })();
+  </script>
+
+  <!--
+  ===================== BACKEND AANBEVELING (voorbeeld) =====================
+  Richt een eenvoudige server in (Node, Python, .NET) met:
+
+  1) /api/ingest (POST multipart)
+     - Extract tekst uit PDF/DOCX/… (bv. pdfminer/pymupdf of pdf-parse)
+     - Chunking (bijv. 800 tokens overlap 100)
+     - Maak embeddings (OpenAI text-embedding-3-large of Azure OpenAI)
+     - Sla op in vectorstore (pgvector/FAISS) met metadata: bron, sectie, pagina
+     - Response: { doc_id, chunks }
+
+  2) /api/chat (POST JSON, streaming)
+     - Body: { chat_id, model, temperature, messages, doc_ids, citations }
+     - Parse laatste user-vraag; zoek top-k passages via vectorstore (per doc_ids)
+     - Bouw systeem prompt gericht op Linde-monteurs:
+       "Je bent AIMY van Motrac. Geef veilige, stapsgewijze diagnose, meetwaardes, grenswaarden, tools, en verwijs naar bron (document, sectie, pagina). Als onbekend: zeg dat je het niet zeker weet en geef vervolgstappen."
+     - RAG-antwoord genereren met citeerblokken en streamen als text/event-stream of chunked fetch.
+
+  3) /api/docs/:id (DELETE)
+     - Verwijder document & vector entries
+
+  SECURITY
+  - Verifieer bestandstypen en scan uploads.
+  - Log geen vertrouwelijke klantinfo.
+  - Voeg auth toe (Azure AD / Entra ID / Basic Auth) vóór productie.
+
+  LICENTIES & MERK
+  - Gebruik enkel Linde-documentatie waarvoor je rechten hebt. Respecteer copyright.
+  - Huisstijl volgt motrac.nl: rood/wit/zwart, sobere UI, duidelijke typografie.
+  ===========================================================================
+  -->
+</body>
+</html>
