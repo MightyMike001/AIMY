@@ -95,6 +95,21 @@
     .badge{font-size:11px; padding:3px 8px; border-radius:999px; border:1px solid #e5e7eb; background:#fff}
     .status.ok{color:var(--ok)} .status.warn{color:var(--warn)} .status.err{color:var(--err)}
 
+    .input{
+      font:inherit;
+      border:1px solid #e5e7eb;
+      border-radius:10px;
+      padding:6px 8px;
+      background:#fff;
+      color:inherit;
+      min-width:0;
+    }
+    .input:focus{
+      outline:none;
+      border-color:var(--motrac-red);
+      box-shadow:0 0 0 3px var(--ring);
+    }
+
     .tiny{font-size:11px; color:var(--muted)}
     .right{margin-left:auto}
   </style>
@@ -158,6 +173,14 @@
           <span class="tiny">Temperatuur</span>
           <input id="temp" type="range" min="0" max="1" step="0.1" value="0.2"/>
         </div>
+        <div class="row" style="margin-top:8px; align-items:flex-start">
+          <span class="tiny" style="padding-top:6px">Webhook</span>
+          <input id="webhookUrl" class="input grow" type="url" placeholder="https://…/aimy-chat"/>
+        </div>
+        <div class="row" style="margin-top:8px; align-items:flex-start">
+          <span class="tiny" style="padding-top:6px">API-token</span>
+          <input id="authToken" class="input grow" type="text" placeholder="optioneel" autocomplete="off"/>
+        </div>
         <div class="row" style="margin-top:8px; justify-content:space-between">
           <span class="tiny">Bronverwijzing</span>
           <label class="row tiny"><input id="citations" type="checkbox" checked style="margin-right:6px"/> Toon secties & paginanummers</label>
@@ -198,6 +221,31 @@
       AUTH_HEADER: 'X-AIMY-Token',
       AUTH_VALUE: '' // bv. 'supersecret' – leeg laten als niet nodig
     };
+    const CONFIG_KEY = 'aimy-config';
+    try{
+      const storedConfig = JSON.parse(localStorage.getItem(CONFIG_KEY) || 'null');
+      if(storedConfig){
+        if(typeof storedConfig.N8N_WEBHOOK === 'string' && storedConfig.N8N_WEBHOOK.trim()){
+          CONFIG.N8N_WEBHOOK = storedConfig.N8N_WEBHOOK.trim();
+        }
+        if(typeof storedConfig.AUTH_VALUE === 'string'){
+          CONFIG.AUTH_VALUE = storedConfig.AUTH_VALUE;
+        }
+        if(typeof storedConfig.AUTH_HEADER === 'string' && storedConfig.AUTH_HEADER.trim()){
+          CONFIG.AUTH_HEADER = storedConfig.AUTH_HEADER.trim();
+        }
+      }
+    }catch{/* localStorage mogelijk niet beschikbaar */}
+
+    function persistConfig(){
+      try{
+        localStorage.setItem(CONFIG_KEY, JSON.stringify({
+          N8N_WEBHOOK: CONFIG.N8N_WEBHOOK,
+          AUTH_HEADER: CONFIG.AUTH_HEADER,
+          AUTH_VALUE: CONFIG.AUTH_VALUE
+        }));
+      }catch{/* ignore */}
+    }
 
     // ---- helpers
     const $ = (q, el=document) => el.querySelector(q);
@@ -208,6 +256,8 @@
     const docList = $('#docList');
     const ingestBadge = $('#ingestStatus');
     const testBadge = $('#testBadge');
+    const webhookInput = $('#webhookUrl');
+    const authInput = $('#authToken');
 
     function fmtBytes(bytes){
       const units=['B','KB','MB','GB'];
@@ -239,6 +289,22 @@
         const idx = state.messages.length-1-lastIdx;
         state.messages[idx].content += chunk;
       }
+    }
+
+    if(webhookInput){
+      webhookInput.value = CONFIG.N8N_WEBHOOK;
+      webhookInput.addEventListener('change', ()=>{
+        const value = webhookInput.value.trim();
+        CONFIG.N8N_WEBHOOK = value || '';
+        persistConfig();
+      });
+    }
+    if(authInput){
+      authInput.value = CONFIG.AUTH_VALUE;
+      authInput.addEventListener('change', ()=>{
+        CONFIG.AUTH_VALUE = authInput.value;
+        persistConfig();
+      });
     }
 
     function renderDocList(){
