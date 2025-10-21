@@ -386,6 +386,7 @@
       if(!text || state.streaming) return;
       addMessage('user', text);
       inputEl.value = '';
+      const history = state.messages.slice(-12);
       addMessage('assistant', ''); // lege bubble voor stream
       state.streaming = true; sendBtn.disabled = true; if(newChatBtn) newChatBtn.disabled = true;
 
@@ -394,7 +395,6 @@
         if (CONFIG.AUTH_VALUE) headers[CONFIG.AUTH_HEADER] = CONFIG.AUTH_VALUE;
 
         // payload op basis van state i.p.v. DOM; beperk history
-        const history = state.messages.slice(-12);
         const body = {
           chat_id: state.chatId,
           query: text,
