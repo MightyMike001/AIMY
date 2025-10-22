@@ -6,7 +6,7 @@ import { setupIngest } from './ingest.js';
 import { loadConfig, persistConfig } from './config.js';
 import { initSettings } from './settings.js';
 import { createChatController } from './chat.js';
-import { setupPersistence, restoreChat } from './storage.js';
+import { setupPersistence, restoreChat, persistHistorySnapshot } from './storage.js';
 import { runTests } from './tests.js';
 import { fmtBytes } from './utils/format.js';
 import { initThemeToggle } from './theme.js';
@@ -38,6 +38,7 @@ function hydratePrechatState(){
   };
   applyComposerAvailability(true);
   renderPrechatSummary();
+  persistHistorySnapshot(state);
 }
 
 function applyComposerAvailability(ready){
@@ -95,6 +96,7 @@ function sharePrechatIntro(){
         contentEl.textContent = summaryText;
       }
     }
+    persistHistorySnapshot(state);
     return;
   }
 
@@ -109,11 +111,13 @@ function sharePrechatIntro(){
         contentEl.textContent = summaryText;
       }
     }
+    persistHistorySnapshot(state);
     return;
   }
 
   addMessage(state, elements.messagesEl, 'assistant', summaryText, { track: true });
   prechat.summaryMessageIndex = state.messages.length - 1;
+  persistHistorySnapshot(state);
 }
 
 initThemeToggle({
@@ -132,6 +136,8 @@ restoreChat({
   docListEl: elements.docList,
   ingestBadge: elements.ingestBadge
 });
+
+persistHistorySnapshot(state);
 
 if(elements.messagesEl && !elements.messagesEl.childElementCount){
   addMessage(state, elements.messagesEl, 'assistant', GREETING, { track: false, scroll: false });

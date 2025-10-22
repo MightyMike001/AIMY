@@ -1,7 +1,7 @@
 import { GREETING, MAX_HISTORY, STREAM_DELAY_MS } from './constants.js';
 import { addMessage, appendStreamChunk } from './messages.js';
 import { resetConversation } from './state.js';
-import { clearChatStorage } from './storage.js';
+import { clearChatStorage, persistHistorySnapshot } from './storage.js';
 
 export function createChatController({ state, config, elements }){
   const { messagesEl, inputEl, sendBtn, newChatBtn, tempInput, citationsCheckbox } = elements;
@@ -20,6 +20,7 @@ export function createChatController({ state, config, elements }){
       return;
     }
     addMessage(state, messagesEl, 'user', text);
+    persistHistorySnapshot(state);
     inputEl.value = '';
     const history = state.messages.slice(-MAX_HISTORY);
     const docIds = state.docs.map(d => d.id);
@@ -110,6 +111,7 @@ export function createChatController({ state, config, elements }){
       if(newChatBtn){
         newChatBtn.disabled = false;
       }
+      persistHistorySnapshot(state);
     }
   }
 
