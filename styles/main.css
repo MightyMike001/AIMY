@@ -144,16 +144,16 @@ body[data-theme="dark"] header{
   cursor:pointer;
 }
 
-.quick{display:flex;flex-wrap:wrap;gap:8px}
-.tag{
-  font-size:12px;
-  padding:7px 10px;
-  border-radius:999px;
-  border:1px solid var(--border-subtle);
-  background:var(--card);
-  cursor:pointer;
-}
-.tag:hover{border-color:var(--motrac-red);color:var(--motrac-red)}
+.precheck{display:flex;flex-direction:column;gap:14px}
+.precheck .field{display:flex;flex-direction:column;gap:6px}
+.precheck label{font-size:13px;font-weight:600;color:var(--ink)}
+.precheck .field.invalid label{color:var(--err)}
+.precheck .error{display:none;color:var(--err)}
+.precheck .field.invalid .error{display:block}
+.precheck .field.invalid .input{border-color:var(--err)}
+.precheck .field.invalid .input:focus{box-shadow:0 0 0 3px rgba(185,28,28,.35)}
+.precheck-status{margin:0;padding:10px;border-radius:10px;background:var(--surface-soft);border:1px solid var(--border-subtle)}
+.precheck-status.ok{border-color:rgba(21,128,61,.45);background:rgba(21,128,61,.08)}
 
 .chat{display:flex;flex-direction:column;height:calc(100dvh - 140px)}
 .chat-toolbar{

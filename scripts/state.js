@@ -6,7 +6,13 @@ export const state = {
     { role: 'assistant', content: GREETING }
   ],
   chatId: crypto.randomUUID(),
-  streaming: false
+  streaming: false,
+  prechat: {
+    serialNumber: '',
+    hours: '',
+    faultCodes: '',
+    ready: false
+  }
 };
 
 export function resetConversation(){
