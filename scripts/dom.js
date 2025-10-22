@@ -19,7 +19,14 @@ export function getElements(){
     fileInput: $('#file'),
     tempInput: $('#temp'),
     citationsCheckbox: $('#citations'),
-    quickContainer: $('#quick'),
-    themeToggle: $('#themeToggle')
+    themeToggle: $('#themeToggle'),
+    precheckForm: $('#precheckForm'),
+    serialInput: $('#serialNumber'),
+    serialError: $('#serialNumberError'),
+    hoursInput: $('#hoursCounter'),
+    hoursError: $('#hoursCounterError'),
+    faultInput: $('#faultCodes'),
+    faultError: $('#faultCodesError'),
+    precheckStatus: $('#precheckStatus')
   };
 }

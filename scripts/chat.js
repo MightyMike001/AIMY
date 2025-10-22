@@ -10,6 +10,11 @@ export function createChatController({ state, config, elements }){
     if(!inputEl || !messagesEl || !sendBtn){
       return;
     }
+
+    if(!state.prechat || !state.prechat.ready){
+      return;
+    }
+
     const text = inputEl.value.trim();
     if(!text || state.streaming){
       return;
@@ -18,6 +23,13 @@ export function createChatController({ state, config, elements }){
     inputEl.value = '';
     const history = state.messages.slice(-MAX_HISTORY);
     const docIds = state.docs.map(d => d.id);
+    const prechat = state.prechat || {
+      serialNumber: '',
+      hours: '',
+      faultCodes: '',
+      ready: false
+    };
+
     const sharedQueryFields = {
       query: text,
       question: text,
@@ -47,7 +59,18 @@ export function createChatController({ state, config, elements }){
         chat_history: history,
         history_text: history.map(m => `${m.role}: ${m.content}`).join('\n'),
         doc_ids: docIds,
-        documents: docIds
+        documents: docIds,
+        prechat,
+        metadata: {
+          serialNumber: prechat.serialNumber,
+          hours: prechat.hours,
+          faultCodes: prechat.faultCodes
+        },
+        serial_number: prechat.serialNumber,
+        serienummer: prechat.serialNumber,
+        hours: prechat.hours,
+        urenstand: prechat.hours,
+        fault_codes: prechat.faultCodes
       };
 
       let data;
@@ -83,7 +106,7 @@ export function createChatController({ state, config, elements }){
       appendStreamChunk(state, messagesEl, '\n[!] n8n-webhook niet bereikbaar. Controleer de Production URL & eventuele auth.');
     }finally{
       state.streaming = false;
-      sendBtn.disabled = false;
+      sendBtn.disabled = !(state.prechat && state.prechat.ready);
       if(newChatBtn){
         newChatBtn.disabled = false;
       }

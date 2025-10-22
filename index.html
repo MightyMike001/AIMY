@@ -27,13 +27,28 @@
     <!-- Sidebar -->
     <aside class="side">
       <section class="card panel">
-        <h3>Snelle hulp</h3>
-        <div class="quick" id="quick">
-          <button class="tag" data-q="Diagnoseer stap-voor-stap een hydrauliek-lek. Noem symptomen, checks, veiligheid en te gebruiken meetwaarden.">Hydrauliek-lek</button>
-          <button class="tag" data-q="Foutcode 224-01 op Linde E20: leg uit wat het betekent, welke sensoren betrokken zijn en geef een systematische diagnose volgorde met meetwaardes.">Foutcode 224-01</button>
-          <button class="tag" data-q="Truck start niet: geef checklist (accu, BMS, noodstop, hoofdschakelaar, zekeringen, CAN, stuurcontroller). Voeg grenswaarden toe.">Startproblemen</button>
-          <button class="tag" data-q="Maak een samenvatting van documentatie over mast-tilt afwijking en kalibratieprocedure. Voeg waarschuwingen toe.">Mast tilt</button>
-        </div>
+        <h3>Werkbon gegevens</h3>
+        <form id="precheckForm" class="precheck" novalidate>
+          <div class="field">
+            <label for="serialNumber">Serienummer <span aria-hidden="true">*</span></label>
+            <input id="serialNumber" class="input" type="text" inputmode="numeric" autocomplete="off" maxlength="12" pattern="\d*" required />
+            <span class="tiny hint">Maximaal 12 cijfers van het truck- of batterijserienummer.</span>
+            <span id="serialNumberError" class="tiny error" aria-live="polite"></span>
+          </div>
+          <div class="field">
+            <label for="hoursCounter">Urenstand <span aria-hidden="true">*</span></label>
+            <input id="hoursCounter" class="input" type="text" inputmode="numeric" autocomplete="off" maxlength="5" pattern="\d*" required />
+            <span class="tiny hint">Voer de totale draaiuren in (maximaal 5 cijfers).</span>
+            <span id="hoursCounterError" class="tiny error" aria-live="polite"></span>
+          </div>
+          <div class="field">
+            <label for="faultCodes">Foutcodes <span aria-hidden="true">*</span></label>
+            <input id="faultCodes" class="input" type="text" autocomplete="off" placeholder="Bijv. 224-01, 350-05" required />
+            <span class="tiny hint">Noteer alle actieve foutcodes gescheiden door komma's.</span>
+            <span id="faultCodesError" class="tiny error" aria-live="polite"></span>
+          </div>
+          <p id="precheckStatus" class="tiny status warn precheck-status" role="status">Vul alle verplichte velden in om te starten met chatten.</p>
+        </form>
       </section>
 
     </aside>
