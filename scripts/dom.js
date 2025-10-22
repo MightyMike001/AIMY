@@ -19,6 +19,7 @@ export function getElements(){
     fileInput: $('#file'),
     tempInput: $('#temp'),
     citationsCheckbox: $('#citations'),
-    quickContainer: $('#quick')
+    quickContainer: $('#quick'),
+    themeToggle: $('#themeToggle')
   };
 }

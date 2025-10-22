@@ -9,9 +9,14 @@ import { createChatController } from './chat.js';
 import { setupPersistence, restoreChat } from './storage.js';
 import { runTests } from './tests.js';
 import { fmtBytes } from './utils/format.js';
+import { initThemeToggle } from './theme.js';
 
 const config = loadConfig();
 const elements = getElements();
+
+initThemeToggle({
+  toggleBtn: elements.themeToggle
+});
 
 initSettings({
   settingsBtn: elements.settingsBtn,
