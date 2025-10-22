@@ -14,7 +14,27 @@ import { initThemeToggle } from './theme.js';
 const config = loadConfig();
 const elements = getElements();
 const defaultPlaceholder = elements.inputEl ? elements.inputEl.getAttribute('placeholder') || '' : '';
-const PRECHECK_DISABLED_PLACEHOLDER = 'Vul eerst serienummer, urenstand en foutcodes in.';
+const PRECHECK_DISABLED_PLACEHOLDER = 'Vul eerst serienummer en urenstand in (foutcodes zijn optioneel).';
+const SERIAL_PATTERN = /^[A-Za-z0-9-]{5,20}$/;
+const HOURS_PATTERN = /^\d{1,6}$/;
+const FAULT_PATTERN = /^[A-Za-z0-9,\-\s]+$/;
+
+ensurePrechatState();
+
+function ensurePrechatState(){
+  if(!state.prechat){
+    state.prechat = {
+      serialNumber: '',
+      hours: '',
+      faultCodes: '',
+      ready: false,
+      completed: false,
+      valid: false,
+      summaryMessageIndex: null
+    };
+  }
+  return state.prechat;
+}
 
 function applyComposerAvailability(ready){
   if(elements.inputEl){
@@ -27,37 +47,139 @@ function applyComposerAvailability(ready){
   }
 }
 
-function updatePrecheck({ force = false } = {}){
-  if(!state.prechat){
-    state.prechat = {
-      serialNumber: '',
-      hours: '',
-      faultCodes: '',
-      ready: false
-    };
+function renderPrechatSummary(){
+  const prechat = ensurePrechatState();
+  if(elements.summarySerial){
+    elements.summarySerial.textContent = prechat.serialNumber || '—';
   }
+  if(elements.summaryHours){
+    elements.summaryHours.textContent = prechat.hours || '—';
+  }
+  if(elements.summaryFaults){
+    const hasFaults = Boolean(prechat.faultCodes);
+    elements.summaryFaults.textContent = hasFaults ? prechat.faultCodes : 'Geen foutcodes opgegeven';
+    elements.summaryFaults.classList.toggle('empty', !hasFaults);
+  }
+}
+
+function sharePrechatIntro(){
+  const prechat = ensurePrechatState();
+  if(!elements.messagesEl){
+    return;
+  }
+
+  const faultsText = prechat.faultCodes ? prechat.faultCodes : 'geen foutcodes opgegeven';
+  const summaryText = [
+    'Top, ik heb de volgende gegevens ontvangen:',
+    `• Serienummer: ${prechat.serialNumber || 'onbekend'}`,
+    `• Urenstand: ${prechat.hours || 'onbekend'}`,
+    `• Foutcodes: ${faultsText}`,
+    'Laat me weten waarbij ik kan helpen.'
+  ].join('\n');
+
+  const summaryIndex = typeof prechat.summaryMessageIndex === 'number' ? prechat.summaryMessageIndex : null;
+  if(summaryIndex != null && state.messages[summaryIndex]){
+    state.messages[summaryIndex].content = summaryText;
+    const existingBubble = elements.messagesEl.children[summaryIndex];
+    if(existingBubble){
+      const contentEl = existingBubble.querySelector('.content');
+      if(contentEl){
+        contentEl.textContent = summaryText;
+      }
+    }
+    return;
+  }
+
+  const replaceableGreeting = state.messages.length === 1 && state.messages[0].content === GREETING;
+  if(replaceableGreeting){
+    state.messages[0].content = summaryText;
+    prechat.summaryMessageIndex = 0;
+    const firstBubble = elements.messagesEl.firstElementChild;
+    if(firstBubble){
+      const contentEl = firstBubble.querySelector('.content');
+      if(contentEl){
+        contentEl.textContent = summaryText;
+      }
+    }
+    return;
+  }
+
+  addMessage(state, elements.messagesEl, 'assistant', summaryText, { track: true });
+  prechat.summaryMessageIndex = state.messages.length - 1;
+}
+
+function showPrechat(){
+  const prechat = ensurePrechatState();
+  prechat.completed = false;
+  prechat.ready = false;
+  applyComposerAvailability(false);
+  document.body.classList.add('prechat');
+  if(elements.precheckPage){
+    elements.precheckPage.setAttribute('aria-hidden', 'false');
+  }
+  window.requestAnimationFrame(() => {
+    updatePrecheck();
+  });
+  window.setTimeout(() => {
+    if(elements.serialInput){
+      elements.serialInput.focus();
+    }
+  }, 60);
+}
+
+function completePrecheck(){
+  const valid = updatePrecheck({ force: true });
+  if(!valid){
+    return;
+  }
+  const prechat = ensurePrechatState();
+  prechat.completed = true;
+  prechat.ready = true;
+  applyComposerAvailability(true);
+  renderPrechatSummary();
+  document.body.classList.remove('prechat');
+  if(elements.precheckPage){
+    elements.precheckPage.setAttribute('aria-hidden', 'true');
+  }
+  sharePrechatIntro();
+  if(elements.inputEl){
+    window.requestAnimationFrame(() => {
+      elements.inputEl.focus();
+    });
+  }
+}
+
+function updatePrecheck({ force = false } = {}){
+  const prechat = ensurePrechatState();
 
   const fields = [
     {
       input: elements.serialInput,
       errorEl: elements.serialError,
       key: 'serialNumber',
-      validate: (value) => /^\d{1,12}$/.test(value),
-      message: 'Gebruik maximaal 12 cijfers.'
+      normalize: (value) => value.toUpperCase(),
+      validate: (value) => value.length > 0 && SERIAL_PATTERN.test(value),
+      message: 'Gebruik 5-20 tekens (letters, cijfers of streepje).'
     },
     {
       input: elements.hoursInput,
       errorEl: elements.hoursError,
       key: 'hours',
-      validate: (value) => /^\d{1,5}$/.test(value),
-      message: 'Vul de urenstand in (maximaal 5 cijfers).'
+      normalize: (value) => value.replace(/\D+/g, ''),
+      validate: (value) => value.length > 0 && HOURS_PATTERN.test(value),
+      message: 'Vul de urenstand in met maximaal 6 cijfers.'
     },
     {
       input: elements.faultInput,
       errorEl: elements.faultError,
       key: 'faultCodes',
-      validate: (value) => value.length > 0,
-      message: 'Vul één of meer foutcodes in.'
+      normalize: (value) => {
+        let normalized = value.toUpperCase().replace(/\s*,\s*/g, ', ').replace(/\s+/g, ' ').trim();
+        normalized = normalized.replace(/,\s*$/, '');
+        return normalized;
+      },
+      validate: (value) => value.length === 0 || FAULT_PATTERN.test(value),
+      message: 'Gebruik alleen cijfers, letters, spaties, komma\'s of koppeltekens.'
     }
   ];
 
@@ -69,8 +191,15 @@ function updatePrecheck({ force = false } = {}){
       return;
     }
 
-    const value = field.input.value.trim();
-    const valid = value.length > 0 && field.validate(value);
+    let value = field.input.value.trim();
+    if(field.normalize){
+      value = field.normalize(value);
+      if(field.input.value !== value){
+        field.input.value = value;
+      }
+    }
+
+    const valid = field.validate(value);
     const touched = force || field.input.dataset.touched === 'true';
 
     if(force){
@@ -90,24 +219,32 @@ function updatePrecheck({ force = false } = {}){
       field.errorEl.textContent = touched && !valid ? field.message : '';
     }
 
-    state.prechat[field.key] = value;
+    prechat[field.key] = value;
 
     if(!valid){
       allValid = false;
     }
   });
 
-  state.prechat.ready = allValid;
+  prechat.valid = allValid;
+  const canChat = prechat.completed && allValid;
+  prechat.ready = canChat;
 
   if(elements.precheckStatus){
     elements.precheckStatus.classList.toggle('ok', allValid);
     elements.precheckStatus.classList.toggle('warn', !allValid);
     elements.precheckStatus.textContent = allValid
-      ? 'Alle verplichte gegevens zijn ingevuld. Je kunt nu chatten.'
-      : 'Vul alle verplichte velden in om te starten met chatten.';
+      ? 'Gegevens compleet. Start de chat met AIMY.'
+      : 'Serienummer en urenstand zijn verplicht. Voeg foutcodes toe als je die hebt.';
   }
 
-  applyComposerAvailability(allValid);
+  if(prechat.completed){
+    applyComposerAvailability(canChat);
+  }else{
+    applyComposerAvailability(false);
+  }
+
+  renderPrechatSummary();
 
   return allValid;
 }
@@ -178,7 +315,14 @@ if(elements.inputEl){
 }
 
 if(elements.newChatBtn){
-  elements.newChatBtn.addEventListener('click', () => chat.resetChat());
+  elements.newChatBtn.addEventListener('click', () => {
+    chat.resetChat();
+    if(state.prechat && state.prechat.ready){
+      window.requestAnimationFrame(() => {
+        sharePrechatIntro();
+      });
+    }
+  });
 }
 
 const precheckInputs = [elements.serialInput, elements.hoursInput, elements.faultInput];
@@ -202,10 +346,13 @@ precheckInputs.forEach((input) => {
 if(elements.precheckForm){
   elements.precheckForm.addEventListener('submit', (event) => {
     event.preventDefault();
-    const valid = updatePrecheck({ force: true });
-    if(valid && elements.inputEl && !elements.inputEl.disabled){
-      elements.inputEl.focus();
-    }
+    completePrecheck();
+  });
+}
+
+if(elements.editPrechatBtn){
+  elements.editPrechatBtn.addEventListener('click', () => {
+    showPrechat();
   });
 }
 

@@ -11,7 +11,10 @@ export const state = {
     serialNumber: '',
     hours: '',
     faultCodes: '',
-    ready: false
+    ready: false,
+    completed: false,
+    valid: false,
+    summaryMessageIndex: null
   }
 };
 
