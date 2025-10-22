@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AIMY – Motrac Service AI Assistent</title>
+  <meta name="description" content="Motrac Service AI Assistent: AIMY helpt monteurs storingen oplossen met ingeladen Linde-documentatie." />
+  <link rel="stylesheet" href="styles/main.css" />
+</head>
+<body>
+  <header>
+    <div class="bar">
+      <div class="logo" aria-hidden>AI</div>
+      <div class="headings">
+        <div class="title">AIMY – Motrac Service AI Assistent</div>
+        <div class="sub">Chat-assistent voor Linde heftrucks – helpt monteurs sneller storingen oplossen</div>
+      </div>
+      <div class="right">
+        <button id="settingsBtn" class="btn secondary small" type="button">Instellingen</button>
+        <span id="ingestStatus" class="badge">Docs: 0</span>
+        <span id="testBadge" class="badge">Tests: 0/0</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <aside class="side">
+      <section class="card panel prechat-summary">
+        <h3>Werkbon gegevens</h3>
+        <dl class="summary-list">
+          <div class="summary-row">
+            <dt>Serienummer</dt>
+            <dd id="summarySerial">—</dd>
+          </div>
+          <div class="summary-row">
+            <dt>Urenstand</dt>
+            <dd id="summaryHours">—</dd>
+          </div>
+          <div class="summary-row">
+            <dt>Foutcodes</dt>
+            <dd id="summaryFaults">Geen foutcodes opgegeven</dd>
+          </div>
+        </dl>
+        <button id="editPrechat" class="btn secondary small" type="button">Werkbon aanpassen</button>
+      </section>
+    </aside>
+
+    <section class="card chat" aria-label="Chat">
+      <div class="chat-toolbar">
+        <button id="newChat" class="btn secondary icon" type="button" aria-label="Nieuwe chat">
+          <span class="sr-only">Nieuwe chat</span>
+          <svg aria-hidden="true" viewBox="0 0 20 20" focusable="false">
+            <path d="M10 3a7 7 0 1 0 0 14 7 7 0 0 0 0-14Zm0-2a9 9 0 1 1 0 18 9 9 0 0 1 0-18Zm1 5v3h3v2h-3v3H9v-3H6V9h3V6h2Z" fill="currentColor" />
+          </svg>
+        </button>
+      </div>
+      <div id="messages" class="messages"></div>
+
+      <div class="composer">
+        <textarea id="input" placeholder="Beschrijf de storing… (bijv. Linde E20 toont foutcode 224-01 na koude start)" rows="1"></textarea>
+        <button id="send" class="btn primary" type="button">Stuur</button>
+      </div>
+    </section>
+  </main>
+
+  <div id="settingsModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="modal-card card panel">
+      <div class="modal-header">
+        <h3 id="settingsTitle" style="margin:0">Instellingen</h3>
+        <button id="closeSettings" class="btn secondary small" type="button">Sluiten</button>
+      </div>
+      <div class="settings-body">
+        <div class="row" style="justify-content:space-between">
+          <span class="tiny">Temperatuur</span>
+          <input id="temp" type="range" min="0" max="1" step="0.1" value="0.2" />
+        </div>
+        <div class="row" style="align-items:flex-start">
+          <span class="tiny" style="padding-top:6px">Webhook</span>
+          <input id="webhookUrl" class="input grow" type="url" placeholder="https://…/aimy-chat" />
+        </div>
+        <div class="row" style="align-items:flex-start">
+          <span class="tiny" style="padding-top:6px">API-token</span>
+          <input id="authToken" class="input grow" type="text" placeholder="optioneel" autocomplete="off" />
+        </div>
+        <div class="row" style="justify-content:space-between">
+          <span class="tiny">Bronverwijzing</span>
+          <label class="row tiny"><input id="citations" type="checkbox" checked style="margin-right:6px" /> Toon secties &amp; paginanummers</label>
+        </div>
+        <p class="tiny" style="margin:4px 0 0">Deze instellingen worden lokaal opgeslagen in je browser.</p>
+        <div class="sep"></div>
+        <div class="settings-section">
+          <h4>Documenten laden</h4>
+          <p class="tiny">Sleep &amp; laat los of klik om Linde-documenten te selecteren. Documenten worden lokaal bijgehouden.</p>
+          <label class="upload" id="drop">
+            <input id="file" type="file" accept=".pdf,.txt,.doc,.docx,.md,.html,.json,.csv" multiple />
+            <div>
+              <div><strong>Bestanden toevoegen</strong></div>
+              <div class="hint">PDF's, handleidingen, service bulletins, storingscodes, etc.</div>
+            </div>
+          </label>
+          <div class="doc-list" id="docList"></div>
+          <div class="tiny">Server endpoints verwacht:</div>
+          <ul class="tiny settings-list">
+            <li><code>POST {n8n}/webhook/aimy-chat</code> – JSON in ⇒ JSON uit (<code>{ answer, citations[] }</code>)</li>
+            <li><em>Optioneel</em>: aparte ingest-webhook voor documentverwerking</li>
+            <li>Beveilig met header-token of reverse proxy</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button id="themeToggle" class="theme-toggle" type="button">🌙 Donker thema</button>
+
+  <script type="module" src="scripts/chat-page.js"></script>
+</body>
+</html>
