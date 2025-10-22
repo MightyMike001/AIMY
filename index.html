@@ -2,21 +2,31 @@
 <html lang="nl">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>AIMY – Motrac Service AI Assistent</title>
-  <meta name="description" content="Motrac Service AI Assistent: AIMY helpt monteurs storingen oplossen met ingeladen Linde-documentatie."/>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AIMY – Start werkbon</title>
+  <meta name="description" content="Start AIMY met de werkbongegevens zodat de chat-assistent direct de juiste context heeft." />
   <link rel="stylesheet" href="styles/main.css" />
 </head>
-<body class="prechat">
-  <div id="prechatPage" class="prechat-page" role="dialog" aria-modal="true" aria-labelledby="prechatTitle" aria-hidden="false">
-    <div class="prechat-card card panel">
+<body class="prechat-only">
+  <header class="prechat-top">
+    <div class="logo" aria-hidden>AI</div>
+    <div class="prechat-branding">
+      <span class="prechat-suptitle">Motrac Service</span>
+      <h1 class="prechat-title">Start AIMY</h1>
+      <p class="prechat-sub">Vul de werkbongegevens in voordat je de chat opent. Zo kan AIMY meteen gericht helpen.</p>
+    </div>
+  </header>
+
+  <main class="prechat-container" role="main">
+    <section class="prechat-card card panel" aria-labelledby="prechatTitle">
       <div class="prechat-header">
         <div class="logo" aria-hidden>AI</div>
         <div class="prechat-titles">
-          <h1 id="prechatTitle">Start AIMY</h1>
-          <p class="hint">Vul de werkbongegevens in. Foutcodes zijn optioneel, maar helpen AIMY om sneller context te krijgen.</p>
+          <h2 id="prechatTitle">Werkbongegevens</h2>
+          <p class="hint">Serienummer en urenstand zijn verplicht. Foutcodes helpen AIMY om sneller context te krijgen.</p>
         </div>
       </div>
+
       <form id="precheckForm" class="precheck" novalidate>
         <div class="field">
           <label for="serialNumber">Serienummer <span aria-hidden="true">*</span></label>
@@ -36,149 +46,30 @@
           <span class="tiny hint">Voeg alle bekende foutcodes toe, gescheiden door komma's.</span>
           <span id="faultCodesError" class="tiny error" aria-live="polite"></span>
         </div>
-        <button id="startChat" class="btn primary full" type="submit">Start chat met AIMY</button>
+
+        <div class="prechat-actions">
+          <button id="startChat" class="btn primary full" type="submit" disabled>Ga naar chat</button>
+          <button id="resetPrechat" class="btn secondary full" type="button">Velden wissen</button>
+        </div>
       </form>
+
       <p id="precheckStatus" class="tiny status warn precheck-status" role="status">Serienummer en urenstand zijn verplicht. Voeg foutcodes toe als je die hebt.</p>
-    </div>
-  </div>
 
-  <header>
-    <div class="bar">
-      <div class="logo" aria-hidden>AI</div>
-      <div class="headings">
-        <div class="title">AIMY – Motrac Service AI Assistent</div>
-        <div class="sub">Chat-assistent voor Linde heftrucks – helpt monteurs sneller storingen oplossen</div>
-      </div>
-      <div class="right">
-        <button id="settingsBtn" class="btn secondary small" type="button">Instellingen</button>
-        <span id="ingestStatus" class="badge">Docs: 0</span>
-        <span id="testBadge" class="badge">Tests: 0/0</span>
-      </div>
-    </div>
-  </header>
+      <ul class="prechat-benefits">
+        <li>Sneller een passende diagnose</li>
+        <li>Betere context voor AIMY's adviezen</li>
+        <li>Documentatie wordt automatisch meegenomen</li>
+      </ul>
 
-  <main class="wrap">
-    <!-- Sidebar -->
-    <aside class="side">
-      <section class="card panel prechat-summary">
-        <h3>Werkbon gegevens</h3>
-        <dl class="summary-list">
-          <div class="summary-row">
-            <dt>Serienummer</dt>
-            <dd id="summarySerial">—</dd>
-          </div>
-          <div class="summary-row">
-            <dt>Urenstand</dt>
-            <dd id="summaryHours">—</dd>
-          </div>
-          <div class="summary-row">
-            <dt>Foutcodes</dt>
-            <dd id="summaryFaults">Geen foutcodes opgegeven</dd>
-          </div>
-        </dl>
-        <button id="editPrechat" class="btn secondary small" type="button">Gegevens bewerken</button>
-      </section>
-
-    </aside>
-
-    <!-- Chat -->
-    <section class="card chat" aria-label="Chat">
-      <div class="chat-toolbar">
-        <button id="newChat" class="btn secondary icon" type="button" aria-label="Nieuwe chat">
-          <span class="sr-only">Nieuwe chat</span>
-          <svg aria-hidden="true" viewBox="0 0 20 20" focusable="false">
-            <path d="M10 3a7 7 0 1 0 0 14 7 7 0 0 0 0-14Zm0-2a9 9 0 1 1 0 18 9 9 0 0 1 0-18Zm1 5v3h3v2h-3v3H9v-3H6V9h3V6h2Z" fill="currentColor"/>
-          </svg>
-        </button>
-      </div>
-      <div id="messages" class="messages"></div>
-
-      <div class="composer">
-        <textarea id="input" placeholder="Beschrijf de storing… (bijv. Linde E20 toont foutcode 224-01 na koude start)" rows="1"></textarea>
-        <button id="send" class="btn primary">Stuur</button>
-      </div>
+      <p class="prechat-footnote tiny">Na het verzenden opent AIMY in een nieuwe pagina met jouw ingevulde gegevens bovenaan.</p>
     </section>
   </main>
 
-  <div id="settingsModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
-    <div class="modal-card card panel">
-      <div class="modal-header">
-        <h3 id="settingsTitle" style="margin:0">Instellingen</h3>
-        <button id="closeSettings" class="btn secondary small" type="button">Sluiten</button>
-      </div>
-      <div class="settings-body">
-        <div class="row" style="justify-content:space-between">
-          <span class="tiny">Temperatuur</span>
-          <input id="temp" type="range" min="0" max="1" step="0.1" value="0.2"/>
-        </div>
-        <div class="row" style="align-items:flex-start">
-          <span class="tiny" style="padding-top:6px">Webhook</span>
-          <input id="webhookUrl" class="input grow" type="url" placeholder="https://…/aimy-chat"/>
-        </div>
-        <div class="row" style="align-items:flex-start">
-          <span class="tiny" style="padding-top:6px">API-token</span>
-          <input id="authToken" class="input grow" type="text" placeholder="optioneel" autocomplete="off"/>
-        </div>
-        <div class="row" style="justify-content:space-between">
-          <span class="tiny">Bronverwijzing</span>
-          <label class="row tiny"><input id="citations" type="checkbox" checked style="margin-right:6px"/> Toon secties & paginanummers</label>
-        </div>
-        <p class="tiny" style="margin:4px 0 0">Deze instellingen worden lokaal opgeslagen in je browser.</p>
-        <div class="sep"></div>
-        <div class="settings-section">
-          <h4>Documenten laden</h4>
-          <p class="tiny">Sleep & laat los of klik om Linde-documenten te selecteren. Documenten worden lokaal bijgehouden.</p>
-          <label class="upload" id="drop">
-            <input id="file" type="file" accept=".pdf,.txt,.doc,.docx,.md,.html,.json,.csv" multiple />
-            <div>
-              <div><strong>Bestanden toevoegen</strong></div>
-              <div class="hint">PDF's, handleidingen, service bulletins, storingscodes, etc.</div>
-            </div>
-          </label>
-          <div class="doc-list" id="docList"></div>
-          <div class="tiny">Server endpoints verwacht:</div>
-          <ul class="tiny settings-list">
-            <li><code>POST {n8n}/webhook/aimy-chat</code> – JSON in ⇒ JSON uit (<code>{ answer, citations[] }</code>)</li>
-            <li><em>Optioneel</em>: aparte ingest-webhook voor documentverwerking</li>
-            <li>Beveilig met header-token of reverse proxy</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </div>
+  <footer class="prechat-footer">
+    <p class="tiny">Problemen met AIMY? Neem contact op met het Motrac supportteam.</p>
+    <a class="prechat-link" href="chat.html">Chat direct openen</a>
+  </footer>
 
-  <button id="themeToggle" class="theme-toggle" type="button">🌙 Donker thema</button>
-
-  <script type="module" src="scripts/main.js"></script>
-
-  <!--
-  ===================== BACKEND AANBEVELING (voorbeeld) =====================
-  Richt een eenvoudige server in (Node, Python, .NET) met:
-
-  1) /api/ingest (POST multipart)
-     - Extract tekst uit PDF/DOCX/… (bv. pdfminer/pymupdf of pdf-parse)
-     - Chunking (bijv. 800 tokens overlap 100)
-     - Maak embeddings (OpenAI text-embedding-3-large of Azure OpenAI)
-     - Sla op in vectorstore (pgvector/FAISS) met metadata: bron, sectie, pagina
-     - Response: { doc_id, chunks }
-
-  2) /api/chat (POST JSON)
-     - Body: { chat_id, model, temperature, history, doc_ids, citations }
-     - Retrieval op basis van vraag + doc_ids, compose prompt, model call
-     - Response: { answer, citations[] }
-
-  3) /api/docs/:id (DELETE)
-     - Verwijder document & vector entries
-
-  SECURITY
-  - Verifieer bestandstypen en scan uploads.
-  - Log geen vertrouwelijke klantinfo.
-  - Voeg auth toe (Azure AD / Entra ID / Basic Auth) vóór productie.
-
-  LICENTIES & MERK
-  - Gebruik enkel Linde-documentatie waarvoor je rechten hebt. Respecteer copyright.
-  - Huisstijl volgt motrac.nl: rood/wit/zwart, sobere UI, duidelijke typografie.
-  ==========================================================================
-  -->
+  <script type="module" src="scripts/prechat-page.js"></script>
 </body>
 </html>
