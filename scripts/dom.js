@@ -27,6 +27,11 @@ export function getElements(){
     hoursError: $('#hoursCounterError'),
     faultInput: $('#faultCodes'),
     faultError: $('#faultCodesError'),
-    precheckStatus: $('#precheckStatus')
+    precheckStatus: $('#precheckStatus'),
+    precheckPage: $('#prechatPage'),
+    summarySerial: $('#summarySerial'),
+    summaryHours: $('#summaryHours'),
+    summaryFaults: $('#summaryFaults'),
+    editPrechatBtn: $('#editPrechat')
   };
 }

@@ -7,7 +7,41 @@
   <meta name="description" content="Motrac Service AI Assistent: AIMY helpt monteurs storingen oplossen met ingeladen Linde-documentatie."/>
   <link rel="stylesheet" href="styles/main.css" />
 </head>
-<body>
+<body class="prechat">
+  <div id="prechatPage" class="prechat-page" role="dialog" aria-modal="true" aria-labelledby="prechatTitle" aria-hidden="false">
+    <div class="prechat-card card panel">
+      <div class="prechat-header">
+        <div class="logo" aria-hidden>AI</div>
+        <div class="prechat-titles">
+          <h1 id="prechatTitle">Start AIMY</h1>
+          <p class="hint">Vul de werkbongegevens in. Foutcodes zijn optioneel, maar helpen AIMY om sneller context te krijgen.</p>
+        </div>
+      </div>
+      <form id="precheckForm" class="precheck" novalidate>
+        <div class="field">
+          <label for="serialNumber">Serienummer <span aria-hidden="true">*</span></label>
+          <input id="serialNumber" class="input" type="text" inputmode="text" autocomplete="off" maxlength="20" pattern="[A-Za-z0-9-]{5,20}" spellcheck="false" required />
+          <span class="tiny hint">Voorbeeld: H21252M00001. Gebruik hoofdletters en cijfers, maximaal 20 tekens.</span>
+          <span id="serialNumberError" class="tiny error" aria-live="polite"></span>
+        </div>
+        <div class="field">
+          <label for="hoursCounter">Urenstand <span aria-hidden="true">*</span></label>
+          <input id="hoursCounter" class="input" type="text" inputmode="numeric" autocomplete="off" maxlength="6" pattern="\d{1,6}" required />
+          <span class="tiny hint">Voer de totale draaiuren in (maximaal 6 cijfers).</span>
+          <span id="hoursCounterError" class="tiny error" aria-live="polite"></span>
+        </div>
+        <div class="field">
+          <label for="faultCodes">Foutcodes</label>
+          <input id="faultCodes" class="input" type="text" autocomplete="off" placeholder="Bijv. 224-01, 350-05" spellcheck="false" />
+          <span class="tiny hint">Voeg alle bekende foutcodes toe, gescheiden door komma's.</span>
+          <span id="faultCodesError" class="tiny error" aria-live="polite"></span>
+        </div>
+        <button id="startChat" class="btn primary full" type="submit">Start chat met AIMY</button>
+      </form>
+      <p id="precheckStatus" class="tiny status warn precheck-status" role="status">Serienummer en urenstand zijn verplicht. Voeg foutcodes toe als je die hebt.</p>
+    </div>
+  </div>
+
   <header>
     <div class="bar">
       <div class="logo" aria-hidden>AI</div>
@@ -26,29 +60,23 @@
   <main class="wrap">
     <!-- Sidebar -->
     <aside class="side">
-      <section class="card panel">
+      <section class="card panel prechat-summary">
         <h3>Werkbon gegevens</h3>
-        <form id="precheckForm" class="precheck" novalidate>
-          <div class="field">
-            <label for="serialNumber">Serienummer <span aria-hidden="true">*</span></label>
-            <input id="serialNumber" class="input" type="text" inputmode="numeric" autocomplete="off" maxlength="12" pattern="\d*" required />
-            <span class="tiny hint">Maximaal 12 cijfers van het truck- of batterijserienummer.</span>
-            <span id="serialNumberError" class="tiny error" aria-live="polite"></span>
+        <dl class="summary-list">
+          <div class="summary-row">
+            <dt>Serienummer</dt>
+            <dd id="summarySerial">—</dd>
           </div>
-          <div class="field">
-            <label for="hoursCounter">Urenstand <span aria-hidden="true">*</span></label>
-            <input id="hoursCounter" class="input" type="text" inputmode="numeric" autocomplete="off" maxlength="5" pattern="\d*" required />
-            <span class="tiny hint">Voer de totale draaiuren in (maximaal 5 cijfers).</span>
-            <span id="hoursCounterError" class="tiny error" aria-live="polite"></span>
+          <div class="summary-row">
+            <dt>Urenstand</dt>
+            <dd id="summaryHours">—</dd>
           </div>
-          <div class="field">
-            <label for="faultCodes">Foutcodes <span aria-hidden="true">*</span></label>
-            <input id="faultCodes" class="input" type="text" autocomplete="off" placeholder="Bijv. 224-01, 350-05" required />
-            <span class="tiny hint">Noteer alle actieve foutcodes gescheiden door komma's.</span>
-            <span id="faultCodesError" class="tiny error" aria-live="polite"></span>
+          <div class="summary-row">
+            <dt>Foutcodes</dt>
+            <dd id="summaryFaults">Geen foutcodes opgegeven</dd>
           </div>
-          <p id="precheckStatus" class="tiny status warn precheck-status" role="status">Vul alle verplichte velden in om te starten met chatten.</p>
-        </form>
+        </dl>
+        <button id="editPrechat" class="btn secondary small" type="button">Gegevens bewerken</button>
       </section>
 
     </aside>
