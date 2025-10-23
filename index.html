@@ -9,21 +9,30 @@
   <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=()" />
   <title>AIMY</title>
   <meta name="description" content="AIMY startscherm" />
-  <link rel="stylesheet" href="styles/main.css" />
+  <link rel="preload" href="AIMY-logov2.png" as="image" fetchpriority="high" />
+  <link rel="stylesheet" href="styles/intro.css" />
 </head>
-<body class="splash background-match light">
-  <div class="background-scene" aria-hidden="true">
-    <canvas id="neurons" aria-hidden="true"></canvas>
-    <canvas id="protons" aria-hidden="true"></canvas>
-    <div class="nevel" aria-hidden="true"></div>
-    <div class="raster" aria-hidden="true"></div>
-    <div class="pulse" aria-hidden="true"></div>
+<body class="intro">
+  <div class="intro__canvas" aria-hidden="true">
+    <canvas id="atom-field" role="presentation"></canvas>
   </div>
 
-  <main class="splash-content" role="main">
-    <img src="DACCFAD1-BABC-4760-9110-77A1D5D402D2.png" alt="AIMY logo" class="splash-logo" />
+  <div class="intro__overlay" aria-hidden="true"></div>
+
+  <main class="intro__content" role="main">
+    <h1 class="intro__title">AIMY</h1>
+    <p class="visually-hidden">Digitale assistent voor een vliegende start.</p>
+    <img
+      src="AIMY-logov2.png"
+      alt="AIMY-logo"
+      width="1024"
+      height="1024"
+      class="intro__logo"
+      decoding="async"
+      fetchpriority="high"
+    />
   </main>
 
-  <script type="module" src="scripts/background.js"></script>
+  <script type="module" src="scripts/intro-canvas.js"></script>
 </body>
 </html>
