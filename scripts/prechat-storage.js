@@ -1,4 +1,6 @@
-const STORAGE_KEY = 'aimy.prechat';
+import { PRECHAT_KEY } from './constants.js';
+
+const STORAGE_KEY = PRECHAT_KEY;
 
 export function loadPrechat(){
   try{

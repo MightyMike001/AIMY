@@ -1,3 +1,7 @@
+import { ensureFreshVersion } from './utils/version.js';
+
+ensureFreshVersion();
+
 const MOTION_QUERY = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
 let reduceMotion = Boolean(MOTION_QUERY && MOTION_QUERY.matches);
 

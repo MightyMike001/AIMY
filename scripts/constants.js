@@ -8,6 +8,10 @@ export const DEFAULT_CONFIG = {
 
 export const CONFIG_KEY = 'aimy-config';
 export const CHAT_KEY = 'aimy-chat';
+export const CHAT_HISTORY_KEY = 'aimy.chat-history';
+export const PRECHAT_KEY = 'aimy.prechat';
+export const APP_VERSION_KEY = 'aimy-version';
+export const APP_VERSION = '2024.05.17';
 export const MAX_HISTORY = 12;
 export const MAX_MESSAGES = 50;
 export const STREAM_DELAY_MS = 4;
