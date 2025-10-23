@@ -2,6 +2,13 @@ import { CHAT_KEY, GREETING } from './constants.js';
 import { addMessage } from './messages.js';
 import { resetConversation } from './state.js';
 import { renderDocList } from './ingest.js';
+import {
+  ensureIsoString,
+  mapDocuments,
+  mapMessages,
+  normalizeHistoryRecord,
+  toStringOr
+} from './utils/history.js';
 
 const CHAT_HISTORY_KEY = 'aimy.chat-history';
 
@@ -15,61 +22,10 @@ function readHistory(){
     if(!Array.isArray(data)){
       return [];
     }
+    const nowIso = new Date().toISOString();
     return data
-      .filter(item => item && typeof item === 'object' && typeof item.id === 'string')
-      .map(item => ({
-        id: item.id,
-        title: typeof item.title === 'string' ? item.title : '',
-        serialNumber: typeof item.serialNumber === 'string' ? item.serialNumber : '',
-        faultCodes: typeof item.faultCodes === 'string' ? item.faultCodes : '',
-        hours: typeof item.hours === 'string' ? item.hours : '',
-        createdAt: typeof item.createdAt === 'string' ? item.createdAt : new Date().toISOString(),
-        updatedAt: typeof item.updatedAt === 'string' ? item.updatedAt : new Date().toISOString(),
-        archived: item.archived === true,
-        lastOpenedAt: typeof item.lastOpenedAt === 'string' ? item.lastOpenedAt : null,
-        messages: Array.isArray(item.messages)
-          ? item.messages
-              .map(msg => ({
-                role: msg && msg.role === 'user' ? 'user' : 'assistant',
-                content: msg && typeof msg.content === 'string' ? msg.content : ''
-              }))
-          : [],
-        docs: Array.isArray(item.docs)
-          ? item.docs.map((doc, index) => {
-            const uploadedAtNumber = (() => {
-              if(typeof doc?.uploadedAt === 'number' && Number.isFinite(doc.uploadedAt)){
-                return doc.uploadedAt;
-              }
-              if(typeof doc?.uploadedAt === 'string'){
-                const parsed = Date.parse(doc.uploadedAt);
-                if(Number.isFinite(parsed)){
-                  return parsed;
-                }
-              }
-              return Date.now();
-            })();
-            const sizeNumber = (() => {
-              if(typeof doc?.size === 'number' && Number.isFinite(doc.size)){
-                return doc.size;
-              }
-              if(typeof doc?.size === 'string'){
-                const parsed = Number(doc.size);
-                return Number.isFinite(parsed) ? parsed : 0;
-              }
-              return 0;
-            })();
-            const fallbackId = typeof crypto?.randomUUID === 'function'
-              ? crypto.randomUUID()
-              : `doc-${index}-${Date.now()}`;
-            return {
-              id: doc && typeof doc.id === 'string' && doc.id ? doc.id : fallbackId,
-              name: doc && typeof doc.name === 'string' ? doc.name : 'Onbekend document',
-              size: sizeNumber,
-              uploadedAt: uploadedAtNumber
-            };
-          })
-          : []
-      }));
+      .map(item => normalizeHistoryRecord(item, { nowIso }))
+      .filter(Boolean);
   }catch{
     return [];
   }
@@ -109,19 +65,16 @@ export function restoreChat({ state, messagesEl, docListEl, ingestBadge }){
     if(!dump){
       return;
     }
-    state.docs = Array.isArray(dump.docs) ? dump.docs.map(d => ({ ...d })) : [];
+    state.docs = mapDocuments(dump.docs);
     renderDocList(state, docListEl, ingestBadge);
 
     if(typeof dump.chatId === 'string' && dump.chatId){
       state.chatId = dump.chatId;
     }
 
-    const restoredMessages = Array.isArray(dump.messages) ? dump.messages.slice(-50) : [];
+    const restoredMessages = mapMessages(dump.messages, { limit: 50 });
     if(restoredMessages.length){
-      state.messages = restoredMessages.map(m => ({
-        role: m && m.role === 'user' ? 'user' : 'assistant',
-        content: m && m.content != null ? String(m.content) : ''
-      }));
+      state.messages = restoredMessages;
       messagesEl.innerHTML = '';
       state.messages.forEach(m => {
         addMessage(state, messagesEl, m.role === 'user' ? 'user' : 'assistant', m.content, { track: false, scroll: false });
@@ -151,58 +104,17 @@ export function persistHistorySnapshot(state){
       return;
     }
     const prechat = state.prechat || {};
-    const serialNumber = typeof prechat.serialNumber === 'string' ? prechat.serialNumber : '';
-    const faultCodes = typeof prechat.faultCodes === 'string' ? prechat.faultCodes : '';
-    const hours = typeof prechat.hours === 'string' ? prechat.hours : '';
+    const serialNumber = toStringOr(prechat.serialNumber);
+    const faultCodes = toStringOr(prechat.faultCodes);
+    const hours = toStringOr(prechat.hours);
     if(!serialNumber){
       return;
     }
 
     const history = readHistory();
-    const now = new Date().toISOString();
-    const messages = Array.isArray(state.messages)
-      ? state.messages.slice(-100).map(msg => ({
-        role: msg && msg.role === 'user' ? 'user' : 'assistant',
-        content: msg && typeof msg.content === 'string' ? msg.content : ''
-      }))
-      : [];
-
-    const docs = Array.isArray(state.docs)
-      ? state.docs.map((doc, index) => {
-        const fallbackId = typeof crypto?.randomUUID === 'function'
-          ? crypto.randomUUID()
-          : `doc-${index}-${Date.now()}`;
-        const sizeNumber = (() => {
-          if(typeof doc?.size === 'number' && Number.isFinite(doc.size)){
-            return doc.size;
-          }
-          if(typeof doc?.size === 'string'){
-            const parsed = Number(doc.size);
-            return Number.isFinite(parsed) ? parsed : 0;
-          }
-          return 0;
-        })();
-        const uploadedAtNumber = (() => {
-          if(typeof doc?.uploadedAt === 'number' && Number.isFinite(doc.uploadedAt)){
-            return doc.uploadedAt;
-          }
-          if(typeof doc?.uploadedAt === 'string'){
-            const parsed = Date.parse(doc.uploadedAt);
-            if(Number.isFinite(parsed)){
-              return parsed;
-            }
-          }
-          return Date.now();
-        })();
-        return {
-          id: doc && typeof doc.id === 'string' && doc.id ? doc.id : fallbackId,
-          name: doc && typeof doc.name === 'string' ? doc.name : 'Onbekend document',
-          size: sizeNumber,
-          uploadedAt: uploadedAtNumber
-        };
-      })
-      : [];
-
+    const nowIso = new Date().toISOString();
+    const messages = mapMessages(state.messages, { limit: 100 });
+    const docs = mapDocuments(state.docs);
     const title = faultCodes ? `${serialNumber} – ${faultCodes}` : serialNumber;
 
     const existingIndex = history.findIndex(item => item.id === state.chatId);
@@ -215,10 +127,12 @@ export function persistHistorySnapshot(state){
       hours,
       messages,
       docs,
-      createdAt: existing?.createdAt || now,
-      updatedAt: now,
+      createdAt: ensureIsoString(existing?.createdAt, nowIso),
+      updatedAt: nowIso,
       archived: existing?.archived === true,
-      lastOpenedAt: existing?.lastOpenedAt || null
+      lastOpenedAt: existing?.lastOpenedAt == null
+        ? null
+        : ensureIsoString(existing.lastOpenedAt, null)
     };
 
     if(existingIndex > -1){
