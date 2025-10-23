@@ -7,11 +7,11 @@
   <meta http-equiv="Referrer-Policy" content="same-origin" />
   <meta http-equiv="X-Content-Type-Options" content="nosniff" />
   <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=()" />
-  <title>AIMY – Start werkbon</title>
-  <meta name="description" content="Start AIMY met de werkbongegevens zodat de chat-assistent direct de juiste context heeft." />
+  <title>AIMY</title>
+  <meta name="description" content="AIMY startscherm" />
   <link rel="stylesheet" href="styles/main.css" />
 </head>
-<body class="prechat-page background-match light">
+<body class="splash background-match light">
   <div class="background-scene" aria-hidden="true">
     <canvas id="neurons" aria-hidden="true"></canvas>
     <canvas id="protons" aria-hidden="true"></canvas>
@@ -19,79 +19,11 @@
     <div class="raster" aria-hidden="true"></div>
     <div class="pulse" aria-hidden="true"></div>
   </div>
-  <header>
-    <div class="bar prechat-top">
-      <div class="logo">
-        <img src="AIMY-logov2.png" alt="AIMY logo" />
-      </div>
-      <div class="headings prechat-branding">
-        <span class="prechat-suptitle">Motrac Service</span>
-        <h1 class="prechat-title">Start AIMY</h1>
-        <p class="prechat-sub">Vul de werkbongegevens in voordat je de chat opent. Zo kan AIMY meteen gericht helpen.</p>
-      </div>
-    </div>
-  </header>
 
-  <main class="prechat-container" role="main">
-    <section class="prechat-card card panel" aria-labelledby="prechatTitle">
-      <div class="prechat-header">
-        <div class="logo" aria-hidden="true">
-          <img src="AIMY-logov2.png" alt="" />
-        </div>
-        <div class="prechat-titles">
-          <h2 id="prechatTitle">Werkbongegevens</h2>
-          <p class="hint">Serienummer en urenstand zijn verplicht. Foutcodes helpen AIMY om sneller context te krijgen.</p>
-        </div>
-      </div>
-
-      <form id="precheckForm" class="precheck" novalidate>
-        <div class="field">
-          <label for="serialNumber">Serienummer <span aria-hidden="true">*</span></label>
-          <input id="serialNumber" class="input" type="text" inputmode="text" autocomplete="off" maxlength="20" pattern="[A-Za-z0-9-]{5,20}" spellcheck="false" required />
-          <span class="tiny hint">Voorbeeld: H21252M00001. Gebruik hoofdletters en cijfers, maximaal 20 tekens.</span>
-          <span id="serialNumberError" class="tiny error" aria-live="polite"></span>
-        </div>
-        <div class="field">
-          <label for="hoursCounter">Urenstand <span aria-hidden="true">*</span></label>
-          <input id="hoursCounter" class="input" type="text" inputmode="numeric" autocomplete="off" maxlength="6" pattern="\d{1,6}" required />
-          <span class="tiny hint">Voer de totale draaiuren in (maximaal 6 cijfers).</span>
-          <span id="hoursCounterError" class="tiny error" aria-live="polite"></span>
-        </div>
-        <div class="field">
-          <label for="faultCodes">Foutcodes</label>
-          <input id="faultCodes" class="input" type="text" autocomplete="off" placeholder="Bijv. 224-01, 350-05" spellcheck="false" />
-          <span class="tiny hint">Voeg alle bekende foutcodes toe, gescheiden door komma's.</span>
-          <span id="faultCodesError" class="tiny error" aria-live="polite"></span>
-        </div>
-
-        <div class="prechat-actions">
-          <button id="startChat" class="btn primary full" type="submit" disabled>Ga naar chat</button>
-          <button id="resetPrechat" class="btn secondary full" type="button">Velden wissen</button>
-        </div>
-      </form>
-
-      <p id="precheckStatus" class="tiny status warn precheck-status" role="status">Serienummer en urenstand zijn verplicht. Voeg foutcodes toe als je die hebt.</p>
-
-      <ul class="prechat-benefits">
-        <li>Sneller een passende diagnose</li>
-        <li>Betere context voor AIMY's adviezen</li>
-        <li>Documentatie wordt automatisch meegenomen</li>
-      </ul>
-
-      <p class="prechat-footnote tiny">Na het verzenden opent AIMY in een nieuwe pagina met jouw ingevulde gegevens bovenaan.</p>
-    </section>
+  <main class="splash-content" role="main">
+    <img src="AIMY-logov2.png" alt="AIMY logo" class="splash-logo" />
   </main>
 
-  <footer class="prechat-footer">
-    <p class="tiny">Problemen met AIMY? Neem contact op met het Motrac supportteam.</p>
-    <div class="prechat-quick-actions" role="group" aria-label="Snelle acties">
-      <a class="ios-button" href="chat.html">Chat direct openen</a>
-      <a class="ios-button" href="history.html">Bewaarde chats bekijken</a>
-    </div>
-  </footer>
-
-  <button id="themeToggle" class="theme-toggle" type="button">🌙 Donker thema</button>
-
-  <script type="module" src="scripts/prechat-page.js"></script>
+  <script type="module" src="scripts/background.js"></script>
 </body>
 </html>
