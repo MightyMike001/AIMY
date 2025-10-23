@@ -17,8 +17,10 @@ if(scene && neuronCanvas && protonCanvas){
     let height = 0;
     let nodes = [];
     let protons = [];
-    let rafNeurons = null;
-    let rafProtons = null;
+    let neuronHandle = null;
+    let protonHandle = null;
+    let neuronScheduler = 'raf';
+    let protonScheduler = 'raf';
 
     function getViewportSize(){
       const width = Math.max(
@@ -184,39 +186,63 @@ if(scene && neuronCanvas && protonCanvas){
       protonCtx.globalCompositeOperation = 'source-over';
     }
 
+    function scheduleNeurons(){
+      if(reduceMotion){
+        neuronScheduler = 'timeout';
+        neuronHandle = window.setTimeout(loopNeurons, 120);
+      } else {
+        neuronScheduler = 'raf';
+        neuronHandle = window.requestAnimationFrame(loopNeurons);
+      }
+    }
+
+    function scheduleProtons(){
+      if(reduceMotion){
+        protonScheduler = 'timeout';
+        protonHandle = window.setTimeout(loopProtons, 120);
+      } else {
+        protonScheduler = 'raf';
+        protonHandle = window.requestAnimationFrame(loopProtons);
+      }
+    }
+
     function loopNeurons(){
       drawNeuronsFrame();
-      if(!reduceMotion){
-        rafNeurons = window.requestAnimationFrame(loopNeurons);
-      }
+      scheduleNeurons();
     }
 
     function loopProtons(){
       drawProtonsFrame();
-      if(!reduceMotion){
-        rafProtons = window.requestAnimationFrame(loopProtons);
-      }
+      scheduleProtons();
     }
 
     function start(){
       cancel();
       drawNeuronsFrame();
       drawProtonsFrame();
-      if(!reduceMotion){
-        rafNeurons = window.requestAnimationFrame(loopNeurons);
-        rafProtons = window.requestAnimationFrame(loopProtons);
-      }
+      scheduleNeurons();
+      scheduleProtons();
     }
 
     function cancel(){
-      if(rafNeurons){
-        window.cancelAnimationFrame(rafNeurons);
-        rafNeurons = null;
+      if(neuronHandle){
+        if(neuronScheduler === 'timeout'){
+          window.clearTimeout(neuronHandle);
+        } else {
+          window.cancelAnimationFrame(neuronHandle);
+        }
+        neuronHandle = null;
       }
-      if(rafProtons){
-        window.cancelAnimationFrame(rafProtons);
-        rafProtons = null;
+      if(protonHandle){
+        if(protonScheduler === 'timeout'){
+          window.clearTimeout(protonHandle);
+        } else {
+          window.cancelAnimationFrame(protonHandle);
+        }
+        protonHandle = null;
       }
+      neuronScheduler = 'raf';
+      protonScheduler = 'raf';
     }
 
     resize({ reseed: true });

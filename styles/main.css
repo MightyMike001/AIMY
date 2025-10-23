@@ -93,6 +93,15 @@ body.background-match.light{
   background:linear-gradient(180deg,#141a2d,#0f1220 60%);
 }
 
+body.background-match::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  background:inherit;
+  z-index:-4;
+  pointer-events:none;
+}
+
 body.background-match header{
   background:linear-gradient(180deg, rgba(16,20,32,.9), rgba(16,20,32,.68));
   border-bottom:1px solid var(--rand);
