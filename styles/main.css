@@ -33,7 +33,10 @@
 }
 *{box-sizing:border-box}
 html,body{height:100%}
-html{scrollbar-gutter:stable both-edges}
+html{
+  scrollbar-gutter:stable both-edges;
+  background:var(--bg);
+}
 body{ 
   margin:0;
   font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
@@ -113,10 +116,10 @@ body.background-match .btn.secondary{
 
 body.background-match .background-scene{
   position:fixed;
-  top:0;
-  left:0;
-  width:var(--viewport-width, 100vw);
-  height:var(--viewport-height, 100vh);
+  top:calc(env(safe-area-inset-top, 0px) * -1);
+  left:calc(env(safe-area-inset-left, 0px) * -1);
+  width:calc(var(--viewport-width, 100vw) + env(safe-area-inset-left, 0px) + env(safe-area-inset-right, 0px));
+  height:calc(var(--viewport-height, 100vh) + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px));
   min-height:100vh;
   min-height:100dvh;
   min-height:100svh;
