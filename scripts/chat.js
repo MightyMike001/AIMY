@@ -34,10 +34,6 @@ export function createChatController({ state, config, elements }){
       return;
     }
 
-    if(!state.prechat || !state.prechat.ready){
-      return;
-    }
-
     const text = sanitizePrompt(inputEl.value);
     if(!text || state.streaming){
       return;
@@ -164,7 +160,7 @@ export function createChatController({ state, config, elements }){
       }
       controller?.abort();
       state.streaming = false;
-      sendBtn.disabled = !(state.prechat && state.prechat.ready);
+      sendBtn.disabled = false;
       if(newChatBtn){
         newChatBtn.disabled = false;
       }

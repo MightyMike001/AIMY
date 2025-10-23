@@ -22,28 +22,32 @@ const PRECHAT_DISABLED_PLACEHOLDER = 'Open AIMY via de startpagina en vul de wer
 
 initViewportObserver();
 
-applyComposerAvailability(false);
 hydratePrechatState();
+applyComposerAvailability(true);
 
 function hydratePrechatState(){
   const stored = loadPrechat();
-  if(!stored || !stored.serialNumber || !stored.hours){
-    window.location.replace('index.html');
-    return;
-  }
+  const serialNumber = typeof stored?.serialNumber === 'string' ? stored.serialNumber.trim().toUpperCase() : '';
+  const hours = typeof stored?.hours === 'string' ? stored.hours.trim() : '';
+  const faultCodes = typeof stored?.faultCodes === 'string' ? stored.faultCodes.trim() : '';
+  const ready = Boolean(serialNumber && hours);
+  const previousSummaryIndex = ready ? state.prechat?.summaryMessageIndex ?? null : null;
 
   state.prechat = {
-    serialNumber: stored.serialNumber || '',
-    hours: stored.hours || '',
-    faultCodes: stored.faultCodes || '',
-    ready: true,
-    completed: true,
-    valid: true,
-    summaryMessageIndex: null
+    serialNumber,
+    hours,
+    faultCodes,
+    ready,
+    completed: ready,
+    valid: ready,
+    summaryMessageIndex: ready ? previousSummaryIndex : null
   };
-  applyComposerAvailability(true);
+
   renderPrechatSummary();
-  persistHistorySnapshot(state);
+
+  if(ready){
+    persistHistorySnapshot(state);
+  }
 }
 
 function applyComposerAvailability(ready){
@@ -61,18 +65,25 @@ function renderPrechatSummary(){
   const prechat = state.prechat || {
     serialNumber: '',
     hours: '',
-    faultCodes: ''
+    faultCodes: '',
+    ready: false
   };
+  const ready = Boolean(prechat.ready);
   if(elements.summarySerial){
-    elements.summarySerial.textContent = prechat.serialNumber || '—';
+    elements.summarySerial.textContent = ready && prechat.serialNumber ? prechat.serialNumber : 'Nog niet ingevuld';
   }
   if(elements.summaryHours){
-    elements.summaryHours.textContent = prechat.hours || '—';
+    elements.summaryHours.textContent = ready && prechat.hours ? prechat.hours : 'Nog niet ingevuld';
   }
   if(elements.summaryFaults){
-    const hasFaults = Boolean(prechat.faultCodes);
-    elements.summaryFaults.textContent = hasFaults ? prechat.faultCodes : 'Geen foutcodes opgegeven';
-    elements.summaryFaults.classList.toggle('empty', !hasFaults);
+    if(!ready){
+      elements.summaryFaults.textContent = 'Vul de werkbon via "Werkbon aanpassen".';
+      elements.summaryFaults.classList.add('empty');
+    }else{
+      const hasFaults = Boolean(prechat.faultCodes);
+      elements.summaryFaults.textContent = hasFaults ? prechat.faultCodes : 'Geen foutcodes opgegeven';
+      elements.summaryFaults.classList.toggle('empty', !hasFaults);
+    }
   }
 }
 
