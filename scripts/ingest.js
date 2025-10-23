@@ -2,6 +2,33 @@ import { fmtBytes } from './utils/format.js';
 
 const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25 MB
 const ALLOWED_EXTENSIONS = new Set(['pdf', 'txt', 'doc', 'docx', 'md', 'html', 'json', 'csv']);
+const CONTROL_CHARS_PATTERN = /[\u0000-\u001F\u007F]/g;
+const MAX_NAME_LENGTH = 120;
+
+function sanitizeFileName(name){
+  if(typeof name !== 'string'){
+    return 'document';
+  }
+  const cleaned = name.replace(CONTROL_CHARS_PATTERN, '').trim();
+  if(!cleaned){
+    return 'document';
+  }
+  if(cleaned.length <= MAX_NAME_LENGTH){
+    return cleaned;
+  }
+  const lastDot = cleaned.lastIndexOf('.');
+  const extension = lastDot > 0 && lastDot < cleaned.length - 1 ? cleaned.slice(lastDot) : '';
+  const baseLength = Math.max(1, MAX_NAME_LENGTH - extension.length);
+  const base = cleaned.slice(0, baseLength).trimEnd();
+  return `${base}${extension}` || 'document';
+}
+
+function normalizeDocId(value){
+  if(typeof value === 'string' && value.trim()){
+    return value.trim();
+  }
+  return crypto.randomUUID();
+}
 
 function createDocElement(doc, state, render){
   const el = document.createElement('div');
@@ -65,10 +92,12 @@ export function renderDocList(state, docListEl, ingestBadge){
     return;
   }
   docListEl.textContent = '';
+  const fragment = document.createDocumentFragment();
   state.docs.forEach(doc => {
     const el = createDocElement(doc, state, () => renderDocList(state, docListEl, ingestBadge));
-    docListEl.appendChild(el);
+    fragment.appendChild(el);
   });
+  docListEl.appendChild(fragment);
 }
 
 async function uploadDoc(state, file){
@@ -87,7 +116,7 @@ async function uploadDoc(state, file){
   form.append('file', file);
   const doc = {
     id: crypto.randomUUID(),
-    name: file.name,
+    name: sanitizeFileName(file.name),
     size: file.size,
     uploadedAt: Date.now()
   };
@@ -96,13 +125,18 @@ async function uploadDoc(state, file){
     if(res.ok){
       const data = await res.json();
       if(data && data.doc_id){
-        doc.id = data.doc_id;
+        doc.id = normalizeDocId(data.doc_id);
       }
     }
   }catch{
     /* optioneel offline */
   }
-  state.docs.push(doc);
+  const existingIndex = state.docs.findIndex(existing => existing.id === doc.id);
+  if(existingIndex > -1){
+    state.docs[existingIndex] = doc;
+  }else{
+    state.docs.push(doc);
+  }
 }
 
 export function setupIngest({ state, dropEl, fileInput, docListEl, ingestBadge }){
@@ -137,7 +171,7 @@ export function setupIngest({ state, dropEl, fileInput, docListEl, ingestBadge }
   fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
 
   async function handleFiles(fileList){
-    const files = [...fileList];
+    const files = Array.from(fileList).filter((item) => item instanceof File);
     if(!files.length){
       return;
     }
