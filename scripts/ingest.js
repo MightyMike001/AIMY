@@ -156,14 +156,16 @@ export function setupIngest({ state, dropEl, fileInput, docListEl, ingestBadge }
     dropEl.addEventListener(eventName, preventDefaults, false);
   });
 
-  dropEl.addEventListener('dragover', () => {
-    dropEl.style.borderColor = 'var(--motrac-red)';
+  const setDropHighlight = (active) => {
+    dropEl.classList.toggle('is-dragover', Boolean(active));
+  };
+
+  ['dragenter', 'dragover'].forEach(eventName => {
+    dropEl.addEventListener(eventName, () => setDropHighlight(true));
   });
 
-  ['dragleave', 'drop'].forEach(eventName => {
-    dropEl.addEventListener(eventName, () => {
-      dropEl.style.borderColor = '#d1d5db';
-    });
+  ['dragleave', 'drop', 'dragend'].forEach(eventName => {
+    dropEl.addEventListener(eventName, () => setDropHighlight(false));
   });
 
   dropEl.addEventListener('click', () => fileInput.click());
@@ -173,11 +175,13 @@ export function setupIngest({ state, dropEl, fileInput, docListEl, ingestBadge }
   async function handleFiles(fileList){
     const files = Array.from(fileList).filter((item) => item instanceof File);
     if(!files.length){
+      setDropHighlight(false);
       return;
     }
     for(const file of files){
       await uploadDoc(state, file);
     }
+    setDropHighlight(false);
     render();
   }
 

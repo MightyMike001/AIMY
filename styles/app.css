@@ -527,6 +527,8 @@ input[disabled], textarea[disabled]{opacity:.6;cursor:not-allowed;}
   transition:border-color .2s ease, background .2s ease;
 }
 
+.upload.is-dragover{border-color:rgba(0,231,255,.55);background:rgba(0,231,255,.08);box-shadow:0 0 0 2px rgba(0,231,255,.25);}
+
 .upload:hover{border-color:rgba(0,231,255,.55);background:rgba(0,231,255,.08);}
 
 .upload:focus-within{border-color:rgba(0,231,255,.55);box-shadow:0 0 0 2px rgba(0,231,255,.25);}
