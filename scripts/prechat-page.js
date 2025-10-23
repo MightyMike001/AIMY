@@ -1,4 +1,5 @@
 import { loadPrechat, savePrechat, clearPrechat } from './prechat-storage.js';
+import { initThemeToggle } from './theme.js';
 import { initViewportObserver } from './utils/viewport.js';
 
 const SERIAL_PATTERN = /^[A-Za-z0-9-]{5,20}$/;
@@ -15,8 +16,10 @@ const faultError = document.getElementById('faultCodesError');
 const statusEl = document.getElementById('precheckStatus');
 const submitBtn = document.getElementById('startChat');
 const resetBtn = document.getElementById('resetPrechat');
+const themeToggle = document.getElementById('themeToggle');
 
 initViewportObserver();
+initThemeToggle({ toggleBtn: themeToggle });
 
 prefillFromStorage();
 updateFormState();
