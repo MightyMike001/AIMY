@@ -5,10 +5,29 @@ import { clearChatStorage, persistHistorySnapshot } from './storage.js';
 import { normalizeWebhookUrl, safeStringify } from './utils/security.js';
 
 const REQUEST_TIMEOUT_MS = 15000;
+const MAX_PROMPT_LENGTH = 4000;
 const DEMO_FALLBACK_MESSAGE = 'Demo-antwoord (n8n URL niet ingesteld). Controleer hoofdschakelaar, noodstop, zekeringen en CAN-bus. Meet accuspanning (>24.0V) en log foutcode 224-01.';
 
 export function createChatController({ state, config, elements }){
   const { messagesEl, inputEl, sendBtn, newChatBtn, tempInput, citationsCheckbox } = elements;
+
+  function sanitizePrompt(value){
+    if(typeof value !== 'string'){
+      return '';
+    }
+    const trimmed = value.trim();
+    if(trimmed.length <= MAX_PROMPT_LENGTH){
+      return trimmed;
+    }
+    return trimmed.slice(0, MAX_PROMPT_LENGTH);
+  }
+
+  function createHistorySnapshot(messages){
+    return messages.slice(-MAX_HISTORY).map((message) => ({
+      role: message.role === 'user' ? 'user' : 'assistant',
+      content: sanitizePrompt(message.content || '')
+    }));
+  }
 
   async function send(){
     if(!inputEl || !messagesEl || !sendBtn){
@@ -19,15 +38,19 @@ export function createChatController({ state, config, elements }){
       return;
     }
 
-    const text = inputEl.value.trim();
+    const text = sanitizePrompt(inputEl.value);
     if(!text || state.streaming){
       return;
     }
     addMessage(state, messagesEl, 'user', text);
     persistHistorySnapshot(state);
     inputEl.value = '';
-    const history = state.messages.slice(-MAX_HISTORY);
-    const docIds = state.docs.map(d => d.id);
+    const history = createHistorySnapshot(state.messages);
+    const docIds = state.docs
+      .map(doc => (typeof doc?.id === 'string' ? doc.id : String(doc?.id || '')).trim())
+      .filter(id => Boolean(id))
+      .slice(0, 50);
+    const uniqueDocIds = Array.from(new Set(docIds));
     const prechat = state.prechat || {
       serialNumber: '',
       hours: '',
@@ -51,8 +74,18 @@ export function createChatController({ state, config, elements }){
 
     const targetWebhook = normalizeWebhookUrl(config.N8N_WEBHOOK);
     const useDemo = !targetWebhook;
-    const controller = useDemo ? null : new AbortController();
-    const timeoutId = useDemo ? null : window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    let timeoutId = null;
+    let controller = null;
+    let signal = null;
+    if(!useDemo){
+      if(typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function'){
+        signal = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
+      }else{
+        controller = new AbortController();
+        signal = controller.signal;
+        timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+      }
+    }
 
     try{
       const headers = { 'Content-Type': 'application/json' };
@@ -68,8 +101,8 @@ export function createChatController({ state, config, elements }){
         messages: history,
         chat_history: history,
         history_text: history.map(m => `${m.role}: ${m.content}`).join('\n'),
-        doc_ids: docIds,
-        documents: docIds,
+        doc_ids: uniqueDocIds,
+        documents: uniqueDocIds,
         prechat,
         metadata: {
           serialNumber: prechat.serialNumber,
@@ -96,7 +129,7 @@ export function createChatController({ state, config, elements }){
           method: 'POST',
           headers,
           body,
-          signal: controller.signal
+          signal
         });
         if(!resp.ok){
           throw new Error(`webhook antwoordt met status ${resp.status}`);
@@ -115,7 +148,7 @@ export function createChatController({ state, config, elements }){
         appendStreamChunk(state, messagesEl, appendix);
       }
     }catch(err){
-      const aborted = err?.name === 'AbortError';
+      const aborted = err?.name === 'AbortError' || err?.name === 'TimeoutError';
       console.error('chat:send failed', { error: err?.message, aborted });
       if(useDemo){
         appendStreamChunk(state, messagesEl, '\n[!] Demo-antwoord kon niet worden weergegeven.');
@@ -129,6 +162,7 @@ export function createChatController({ state, config, elements }){
       if(timeoutId){
         window.clearTimeout(timeoutId);
       }
+      controller?.abort();
       state.streaming = false;
       sendBtn.disabled = !(state.prechat && state.prechat.ready);
       if(newChatBtn){

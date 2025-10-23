@@ -92,7 +92,8 @@ export function sanitizeHeaderValue(value){
 export function safeStringify(value){
   try{
     return JSON.stringify(value);
-  }catch{
-    return '{}';
+  }catch(err){
+    console.warn('safeStringify: kon waarde niet serialiseren', err);
+    return null;
   }
 }

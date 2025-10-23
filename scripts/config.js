@@ -44,7 +44,10 @@ export function persistConfig(config){
     config.N8N_WEBHOOK = snapshot.N8N_WEBHOOK;
     config.AUTH_HEADER = snapshot.AUTH_HEADER;
     config.AUTH_VALUE = snapshot.AUTH_VALUE;
-    localStorage.setItem(CONFIG_KEY, safeStringify(snapshot));
+    const serialized = safeStringify(snapshot);
+    if(serialized){
+      localStorage.setItem(CONFIG_KEY, serialized);
+    }
   }catch{
     /* ignore */
   }
