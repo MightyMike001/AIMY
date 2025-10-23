@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="default-src 'self'; img-src 'self' data:; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' https:; font-src 'self'; base-uri 'self'; form-action 'self'"
+  />
+  <meta http-equiv="Referrer-Policy" content="same-origin" />
+  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+  <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=()" />
+  <title>AIMY – Nieuwe chat starten</title>
+  <meta
+    name="description"
+    content="Bereid AIMY voor met serienummer, urenstand en foutcodes zodat de chat meteen relevante hulp kan geven."
+  />
+  <link rel="stylesheet" href="styles/main.css" />
+</head>
+<body class="prechat-page background-match light">
+  <div class="background-scene" aria-hidden="true">
+    <canvas id="neurons" aria-hidden="true"></canvas>
+    <canvas id="protons" aria-hidden="true"></canvas>
+    <div class="nevel" aria-hidden="true"></div>
+    <div class="raster" aria-hidden="true"></div>
+    <div class="pulse" aria-hidden="true"></div>
+  </div>
+
+  <div class="prechat-top">
+    <div class="logo">
+      <img src="assets/DACCFAD1-BABC-4760-9110-77A1D5D402D2.png" alt="AIMY logo" />
+    </div>
+    <div class="prechat-branding">
+      <span class="prechat-suptitle">Motrac Service AI assistent</span>
+      <h1 class="prechat-title">Start een nieuwe chat</h1>
+      <p class="prechat-sub">Vul je werkbongegevens in. AIMY gebruikt deze context om direct gericht mee te denken.</p>
+    </div>
+  </div>
+
+  <main class="prechat-container" role="main">
+    <article class="prechat-card card panel">
+      <div class="prechat-header">
+        <div class="logo">
+          <img src="assets/DACCFAD1-BABC-4760-9110-77A1D5D402D2.png" alt="AIMY logo" />
+        </div>
+        <div class="prechat-titles">
+          <h2>Werkbon voorbereiden</h2>
+          <p class="hint">Deze gegevens worden alleen lokaal bewaard en meegestuurd naar AIMY wanneer je de chat start.</p>
+        </div>
+      </div>
+
+      <form id="precheckForm" class="precheck" novalidate>
+        <div class="field">
+          <label for="serialNumber">Serienummer</label>
+          <input
+            id="serialNumber"
+            class="input"
+            name="serialNumber"
+            type="text"
+            inputmode="text"
+            autocomplete="off"
+            spellcheck="false"
+            required
+            minlength="5"
+            maxlength="20"
+            placeholder="Bijvoorbeeld H2X394N01234"
+          />
+          <p id="serialNumberError" class="error" role="alert"></p>
+        </div>
+
+        <div class="field">
+          <label for="hoursCounter">Urenstand</label>
+          <input
+            id="hoursCounter"
+            class="input"
+            name="hoursCounter"
+            type="text"
+            inputmode="numeric"
+            autocomplete="off"
+            spellcheck="false"
+            required
+            maxlength="6"
+            placeholder="Bijvoorbeeld 3650"
+          />
+          <p id="hoursCounterError" class="error" role="alert"></p>
+        </div>
+
+        <div class="field">
+          <label for="faultCodes">Foutcodes (optioneel)</label>
+          <textarea
+            id="faultCodes"
+            class="input"
+            name="faultCodes"
+            rows="2"
+            inputmode="text"
+            placeholder="Bijvoorbeeld 224-01, 280-05"
+          ></textarea>
+          <p id="faultCodesError" class="error" role="alert"></p>
+        </div>
+
+        <p id="precheckStatus" class="precheck-status" role="status">
+          Serienummer en urenstand zijn verplicht. Voeg foutcodes toe als je die hebt.
+        </p>
+
+        <div class="prechat-actions">
+          <button id="startChat" class="btn primary" type="submit">Start chat met AIMY</button>
+          <button id="resetPrechat" class="btn secondary" type="button">Wissen</button>
+        </div>
+      </form>
+
+      <ul class="prechat-benefits">
+        <li>AIMY gebruikt je gegevens om antwoorden te personaliseren.</li>
+        <li>We slaan alles lokaal op – niets wordt naar de server gestuurd zonder jouw actie.</li>
+        <li>Je kunt de gegevens later opnieuw gebruiken of aanpassen.</li>
+      </ul>
+
+      <p class="prechat-footnote hint">Klaar? Start de chat of open je geschiedenis om een bestaande sessie te hervatten.</p>
+    </article>
+  </main>
+
+  <footer class="prechat-footer">
+    <div class="prechat-quick-actions">
+      <a class="ios-button" href="history.html">Bekijk chatgeschiedenis</a>
+      <a class="ios-button" href="chat.html">Ga naar actieve chat</a>
+    </div>
+  </footer>
+
+  <button id="themeToggle" class="theme-toggle" type="button">🌙 Donker thema</button>
+
+  <script type="module" src="scripts/prechat-page.js"></script>
+</body>
+</html>
