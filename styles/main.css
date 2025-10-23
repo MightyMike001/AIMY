@@ -76,6 +76,8 @@ body.background-match .card{
 }
 
 body.background-match .logo{
+  background:rgba(25,28,40,.78);
+  border-color:var(--border-strong);
   box-shadow:inset 0 -3px 10px rgba(0,0,0,.35),0 0 20px rgba(0,231,255,.15);
 }
 
@@ -226,15 +228,25 @@ body.background-match[data-theme="dark"] header{
 }
 .bar > *{min-width:0}
 .logo{
-  width:34px;
-  height:34px;
-  border-radius:8px;
-  display:grid;
-  place-items:center;
-  font-weight:800;
-  color:#fff;
-  background:linear-gradient(135deg, var(--motrac-red), #ff4d61);
-  box-shadow:inset 0 -3px 10px rgba(0,0,0,.2);
+  width:48px;
+  height:48px;
+  border-radius:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:6px;
+  background:var(--card);
+  border:1px solid var(--border-subtle);
+  box-shadow:var(--shadow);
+  overflow:hidden;
+  flex-shrink:0;
+}
+
+.logo img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  display:block;
 }
 .headings{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1 1 240px}
 .title{font-size:18px;font-weight:750;letter-spacing:.2px;line-height:1.2}
@@ -349,7 +361,7 @@ body.chat-page .panel{padding:20px 22px}
   margin:0 auto;
   align-items:flex-start;
 }
-.prechat-top .logo{width:40px;height:40px;font-size:16px}
+.prechat-top .logo{width:60px;height:60px;padding:8px}
 .prechat-branding{display:flex;flex-direction:column;gap:6px}
 .prechat-suptitle{font-size:12px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted)}
 .prechat-title{margin:0;font-size:26px;letter-spacing:.03em}
@@ -1127,7 +1139,7 @@ body.background-match .theme-toggle:focus-visible{
 @media (max-width: 600px){
   .wrap{margin:12px auto;padding:0 12px}
   .bar{gap:10px}
-  .logo{width:32px;height:32px;font-size:14px}
+  .logo{width:40px;height:40px;padding:5px}
   .chat{height:auto;min-height:65vh}
   .messages{padding:12px}
   .composer{flex-direction:column;align-items:stretch}
