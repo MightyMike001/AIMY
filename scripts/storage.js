@@ -1,4 +1,4 @@
-import { CHAT_KEY, GREETING } from './constants.js';
+import { CHAT_KEY, CHAT_HISTORY_KEY, GREETING } from './constants.js';
 import { addMessage } from './messages.js';
 import { resetConversation } from './state.js';
 import { renderDocList } from './ingest.js';
@@ -9,8 +9,6 @@ import {
   normalizeHistoryRecord,
   toStringOr
 } from './utils/history.js';
-
-const CHAT_HISTORY_KEY = 'aimy.chat-history';
 
 function readHistory(){
   try{
