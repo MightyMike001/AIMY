@@ -1,24 +1,51 @@
 import { fmtBytes } from './utils/format.js';
 
+const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25 MB
+const ALLOWED_EXTENSIONS = new Set(['pdf', 'txt', 'doc', 'docx', 'md', 'html', 'json', 'csv']);
+
 function createDocElement(doc, state, render){
   const el = document.createElement('div');
   el.className = 'doc';
-  el.innerHTML = `<div class="dot"></div>
-    <div class="meta">
-      <div class="name">${doc.name}</div>
-      <div class="small">${fmtBytes(doc.size)} • ${new Date(doc.uploadedAt).toLocaleString()}</div>
-    </div>
-    <button data-id="${doc.id}" title="Verwijderen">Verwijder</button>`;
-  el.querySelector('button').addEventListener('click', async (ev) => {
+
+  const dot = document.createElement('div');
+  dot.className = 'dot';
+  el.appendChild(dot);
+
+  const meta = document.createElement('div');
+  meta.className = 'meta';
+
+  const name = document.createElement('div');
+  name.className = 'name';
+  name.textContent = doc.name;
+  meta.appendChild(name);
+
+  const metaDetails = document.createElement('div');
+  metaDetails.className = 'small';
+  metaDetails.textContent = `${fmtBytes(doc.size)} • ${new Date(doc.uploadedAt).toLocaleString()}`;
+  meta.appendChild(metaDetails);
+
+  el.appendChild(meta);
+
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.dataset.id = doc.id;
+  button.title = 'Verwijderen';
+  button.textContent = 'Verwijder';
+  button.addEventListener('click', async (ev) => {
     const id = ev.currentTarget.getAttribute('data-id');
+    if(!id){
+      return;
+    }
     try{
-      await fetch(`/api/docs/${id}`, { method: 'DELETE' });
+      await fetch(`/api/docs/${encodeURIComponent(id)}`, { method: 'DELETE' });
     }catch{
       /* optioneel offline */
     }
     state.docs = state.docs.filter(x => x.id !== id);
     render();
   });
+
+  el.appendChild(button);
   return el;
 }
 
@@ -30,10 +57,14 @@ export function renderDocList(state, docListEl, ingestBadge){
     ingestBadge.textContent = `Docs: ${state.docs.length}`;
   }
   if(!state.docs.length){
-    docListEl.innerHTML = '<div class="hint">Nog niets geladen</div>';
+    docListEl.textContent = '';
+    const empty = document.createElement('div');
+    empty.className = 'hint';
+    empty.textContent = 'Nog niets geladen';
+    docListEl.appendChild(empty);
     return;
   }
-  docListEl.innerHTML = '';
+  docListEl.textContent = '';
   state.docs.forEach(doc => {
     const el = createDocElement(doc, state, () => renderDocList(state, docListEl, ingestBadge));
     docListEl.appendChild(el);
@@ -41,6 +72,17 @@ export function renderDocList(state, docListEl, ingestBadge){
 }
 
 async function uploadDoc(state, file){
+  if(file.size > MAX_FILE_SIZE){
+    console.warn('Bestand te groot om te uploaden', { name: file.name, size: file.size });
+    return;
+  }
+
+  const extension = (file.name.split('.').pop() || '').toLowerCase();
+  if(extension && !ALLOWED_EXTENSIONS.has(extension)){
+    console.warn('Bestandstype niet toegestaan', { name: file.name });
+    return;
+  }
+
   const form = new FormData();
   form.append('file', file);
   const doc = {

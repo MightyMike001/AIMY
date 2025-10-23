@@ -13,6 +13,7 @@ import { fmtBytes } from './utils/format.js';
 import { initThemeToggle } from './theme.js';
 import { loadPrechat } from './prechat-storage.js';
 import { initViewportObserver } from './utils/viewport.js';
+import { normalizeWebhookUrl, sanitizeHeaderValue } from './utils/security.js';
 
 const config = loadConfig();
 const elements = getElements();
@@ -162,8 +163,9 @@ setupIngest({
 if(elements.webhookInput){
   elements.webhookInput.value = config.N8N_WEBHOOK;
   elements.webhookInput.addEventListener('change', () => {
-    const value = elements.webhookInput.value.trim();
-    config.N8N_WEBHOOK = value || '';
+    const normalized = normalizeWebhookUrl(elements.webhookInput.value);
+    config.N8N_WEBHOOK = normalized;
+    elements.webhookInput.value = normalized;
     persistConfig(config);
   });
 }
@@ -171,7 +173,9 @@ if(elements.webhookInput){
 if(elements.authInput){
   elements.authInput.value = config.AUTH_VALUE;
   elements.authInput.addEventListener('change', () => {
-    config.AUTH_VALUE = elements.authInput.value;
+    const sanitized = sanitizeHeaderValue(elements.authInput.value);
+    config.AUTH_VALUE = sanitized;
+    elements.authInput.value = sanitized;
     persistConfig(config);
   });
 }
