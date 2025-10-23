@@ -20,10 +20,29 @@ if(scene && neuronCanvas && protonCanvas){
     let rafNeurons = null;
     let rafProtons = null;
 
+    function getViewportSize(){
+      const width = Math.max(
+        window.innerWidth || 0,
+        document.documentElement ? document.documentElement.clientWidth : 0,
+        scene.clientWidth || 0
+      );
+      const heightCandidates = [
+        window.innerHeight || 0,
+        document.documentElement ? document.documentElement.clientHeight : 0,
+        scene.clientHeight || 0
+      ];
+      if(window.visualViewport && window.visualViewport.height){
+        heightCandidates.push(window.visualViewport.height);
+      }
+      const height = Math.max(...heightCandidates);
+      return { width, height };
+    }
+
     function resize({ reseed = false } = {}){
       DPR = Math.min(window.devicePixelRatio || 1, 1.6);
-      const pixelWidth = Math.floor(window.innerWidth * DPR);
-      const pixelHeight = Math.floor(window.innerHeight * DPR);
+      const { width: viewportWidth, height: viewportHeight } = getViewportSize();
+      const pixelWidth = Math.floor(viewportWidth * DPR);
+      const pixelHeight = Math.floor(viewportHeight * DPR);
       if(neuronCanvas.width !== pixelWidth){
         neuronCanvas.width = pixelWidth;
       }
@@ -40,6 +59,10 @@ if(scene && neuronCanvas && protonCanvas){
       neuronCanvas.style.height = '100%';
       protonCanvas.style.width = '100%';
       protonCanvas.style.height = '100%';
+      scene.style.width = `${viewportWidth}px`;
+      scene.style.height = `${viewportHeight}px`;
+      scene.style.setProperty('--viewport-width', `${viewportWidth}px`);
+      scene.style.setProperty('--viewport-height', `${viewportHeight}px`);
       const prevWidth = width || pixelWidth;
       const prevHeight = height || pixelHeight;
       width = neuronCanvas.width;
