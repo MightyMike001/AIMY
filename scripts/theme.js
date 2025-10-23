@@ -33,7 +33,7 @@ function updateToggleLabel(btn, theme){
     return;
   }
   const nextTheme = theme === THEMES.DARK ? THEMES.LIGHT : THEMES.DARK;
-  const icon = nextTheme === THEMES.LIGHT ? '🌙' : '🌑';
+  const icon = nextTheme === THEMES.LIGHT ? '☀️' : '🌑';
   const label = nextTheme === THEMES.LIGHT ? 'Licht thema' : 'Donker thema';
   btn.textContent = `${icon} ${label}`;
   btn.setAttribute('aria-label', `Schakel naar ${label.toLowerCase()}`);
