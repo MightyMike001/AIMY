@@ -2,7 +2,7 @@
 <html lang="nl">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta
     http-equiv="Content-Security-Policy"
     content="default-src 'self'; img-src 'self' data:; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' https:; font-src 'self'; base-uri 'self'; form-action 'self'"
@@ -10,109 +10,146 @@
   <meta http-equiv="Referrer-Policy" content="same-origin" />
   <meta http-equiv="X-Content-Type-Options" content="nosniff" />
   <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=()" />
-  <title>AIMY – Nieuwe chat starten</title>
+  <title>AIMY – Werkbon voorbereiden</title>
   <meta
     name="description"
-    content="Bereid AIMY voor met serienummer, urenstand en foutcodes zodat de chat meteen relevante hulp kan geven."
+    content="Bereid AIMY voor met serienummer, urenstand en optionele foutcodes zodat de assistent direct met jouw werkbon aan de slag kan."
   />
-  <link rel="stylesheet" href="styles/main.css" />
+  <link
+    rel="preload"
+    href="assets/DACCFAD1-BABC-4760-9110-77A1D5D402D2.png"
+    as="image"
+    fetchpriority="high"
+    imagesrcset="assets/DACCFAD1-BABC-4760-9110-77A1D5D402D2.png 1024w"
+    imagesizes="(max-width: 768px) 60vw, 420px"
+  />
+  <link rel="stylesheet" href="styles/app.css" />
 </head>
-<body class="prechat-page background-match light">
-  <div class="background-scene" aria-hidden="true">
-    <canvas id="neurons" aria-hidden="true"></canvas>
-    <canvas id="protons" aria-hidden="true"></canvas>
-    <div class="nevel" aria-hidden="true"></div>
-    <div class="raster" aria-hidden="true"></div>
-    <div class="pulse" aria-hidden="true"></div>
+<body class="app background-match" data-theme="light">
+  <div class="app__background" aria-hidden="true">
+    <canvas id="atom-field" role="presentation"></canvas>
+    <div class="app__overlay" aria-hidden="true"></div>
+    <img
+      src="assets/DACCFAD1-BABC-4760-9110-77A1D5D402D2.png"
+      alt=""
+      aria-hidden="true"
+      width="1024"
+      height="1024"
+      class="app__logo"
+      decoding="async"
+      loading="lazy"
+    />
   </div>
 
-  <main class="prechat-container" role="main">
-    <article class="prechat-card card panel">
-      <div class="prechat-header">
-        <div class="logo">
-          <img src="assets/DACCFAD1-BABC-4760-9110-77A1D5D402D2.png" alt="AIMY logo" />
-        </div>
-        <div class="prechat-titles">
-          <h2>Werkbon voorbereiden</h2>
-          <p class="hint">Deze gegevens worden alleen lokaal bewaard en meegestuurd naar AIMY wanneer je de chat start.</p>
+  <div class="app__inner">
+    <header class="app-header" role="banner">
+      <div class="app-header__brand">
+        <img
+          src="assets/DACCFAD1-BABC-4760-9110-77A1D5D402D2.png"
+          alt="AIMY-logo"
+          width="72"
+          height="72"
+          class="app-header__mark"
+          decoding="async"
+          fetchpriority="high"
+        />
+        <div class="app-header__copy">
+          <p class="app-header__eyebrow">Stap 1</p>
+          <h1 class="app-header__title">Werkbon voorbereiden</h1>
         </div>
       </div>
+      <div class="app-header__cta">
+        <a class="btn btn--ghost btn--small" href="history.html">Chatgeschiedenis</a>
+        <a class="btn btn--ghost btn--small" href="chat.html">Ga naar chat</a>
+      </div>
+    </header>
 
-      <form id="precheckForm" class="precheck" novalidate>
-        <div class="field">
-          <label for="serialNumber">Serienummer</label>
-          <input
-            id="serialNumber"
-            class="input"
-            name="serialNumber"
-            type="text"
-            inputmode="text"
-            autocomplete="off"
-            spellcheck="false"
-            required
-            minlength="5"
-            maxlength="20"
-            placeholder="Bijvoorbeeld H2X394N01234"
-          />
-          <p id="serialNumberError" class="error" role="alert"></p>
-        </div>
+    <main class="app-main" role="main">
+      <article class="panel prechat-card" aria-labelledby="prechatHeading">
+        <header class="prechat-header">
+          <div class="logo" aria-hidden="true">
+            <img src="assets/DACCFAD1-BABC-4760-9110-77A1D5D402D2.png" alt="" />
+          </div>
+          <div class="prechat-titles">
+            <h2 id="prechatHeading">Vul je werkbongegevens in</h2>
+            <p class="hint">We bewaren alles lokaal en gebruiken het alleen wanneer je AIMY start.</p>
+          </div>
+        </header>
 
-        <div class="field">
-          <label for="hoursCounter">Urenstand</label>
-          <input
-            id="hoursCounter"
-            class="input"
-            name="hoursCounter"
-            type="text"
-            inputmode="numeric"
-            autocomplete="off"
-            spellcheck="false"
-            required
-            maxlength="6"
-            placeholder="Bijvoorbeeld 3650"
-          />
-          <p id="hoursCounterError" class="error" role="alert"></p>
-        </div>
+        <form id="precheckForm" class="precheck" novalidate>
+          <div class="field">
+            <label for="serialNumber">Serienummer <span class="visually-hidden">(verplicht)</span></label>
+            <input
+              id="serialNumber"
+              class="input"
+              name="serialNumber"
+              type="text"
+              inputmode="text"
+              autocomplete="off"
+              spellcheck="false"
+              required
+              minlength="5"
+              maxlength="20"
+              placeholder="Bijvoorbeeld H2X394N01234"
+            />
+            <p id="serialNumberError" class="error" role="alert"></p>
+          </div>
 
-        <div class="field">
-          <label for="faultCodes">Foutcodes (optioneel)</label>
-          <textarea
-            id="faultCodes"
-            class="input"
-            name="faultCodes"
-            rows="2"
-            inputmode="text"
-            placeholder="Bijvoorbeeld 224-01, 280-05"
-          ></textarea>
-          <p id="faultCodesError" class="error" role="alert"></p>
-        </div>
+          <div class="field">
+            <label for="hoursCounter">Urenstand <span class="visually-hidden">(verplicht)</span></label>
+            <input
+              id="hoursCounter"
+              class="input"
+              name="hoursCounter"
+              type="text"
+              inputmode="numeric"
+              autocomplete="off"
+              spellcheck="false"
+              required
+              maxlength="6"
+              placeholder="Bijvoorbeeld 3650"
+            />
+            <p id="hoursCounterError" class="error" role="alert"></p>
+          </div>
 
-        <p id="precheckStatus" class="precheck-status" role="status">
-          Serienummer en urenstand zijn verplicht. Voeg foutcodes toe als je die hebt.
-        </p>
+          <div class="field">
+            <label for="faultCodes">Foutcodes (optioneel)</label>
+            <textarea
+              id="faultCodes"
+              class="input"
+              name="faultCodes"
+              rows="2"
+              inputmode="text"
+              placeholder="Bijvoorbeeld 224-01, 280-05"
+            ></textarea>
+            <p id="faultCodesError" class="error" role="alert"></p>
+          </div>
 
-        <div class="prechat-actions">
-          <button id="startChat" class="btn primary" type="submit">Start chat met AIMY</button>
-          <button id="resetPrechat" class="btn secondary" type="button">Wissen</button>
-        </div>
-      </form>
+          <p id="precheckStatus" class="precheck-status" role="status">
+            Serienummer en urenstand zijn verplicht. Voeg foutcodes toe als je die hebt.
+          </p>
 
-      <ul class="prechat-benefits">
-        <li>AIMY gebruikt je gegevens om antwoorden te personaliseren.</li>
-        <li>We slaan alles lokaal op – niets wordt naar de server gestuurd zonder jouw actie.</li>
-        <li>Je kunt de gegevens later opnieuw gebruiken of aanpassen.</li>
-      </ul>
+          <div class="prechat-actions">
+            <button id="startChat" class="btn" type="submit">Start chat met AIMY</button>
+            <button id="resetPrechat" class="btn btn--ghost" type="button">Wissen</button>
+          </div>
+        </form>
 
-      <p class="prechat-footnote hint">Klaar? Start de chat of open je geschiedenis om een bestaande sessie te hervatten.</p>
-    </article>
-  </main>
+        <ul class="prechat-benefits">
+          <li>AIMY gebruikt je gegevens om antwoorden te personaliseren.</li>
+          <li>We slaan alles lokaal op – niets wordt zonder jouw actie verstuurd.</li>
+          <li>Je kunt de gegevens later opnieuw gebruiken of aanpassen.</li>
+        </ul>
 
-  <footer class="prechat-footer">
-    <div class="prechat-quick-actions">
-      <a class="ios-button" href="history.html">Bekijk chatgeschiedenis</a>
-      <a class="ios-button" href="chat.html">Ga naar actieve chat</a>
-    </div>
-  </footer>
+        <p class="prechat-footnote">Klaar? Start de chat of bekijk een eerdere sessie.</p>
+      </article>
+    </main>
+  </div>
+
+  <div class="prechat-quick-actions" role="navigation" aria-label="Snelle acties">
+    <a class="ios-button" href="history.html">Bekijk chatgeschiedenis</a>
+    <a class="ios-button" href="chat.html">Open chat</a>
+  </div>
 
   <button id="themeToggle" class="theme-toggle" type="button">🌙 Donker thema</button>
 
