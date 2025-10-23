@@ -2,7 +2,6 @@ import './background.js';
 import { loadChatHistory, setChatArchived, removeChatFromHistory, markChatOpened } from './storage.js';
 import { savePrechat } from './prechat-storage.js';
 import { CHAT_KEY } from './constants.js';
-import { initThemeToggle } from './theme.js';
 import { initViewportObserver } from './utils/viewport.js';
 
 const searchInput = document.getElementById('historySearch');
@@ -12,10 +11,6 @@ const activeEmptyEl = document.getElementById('historyEmptyActive');
 const archivedEmptyEl = document.getElementById('historyEmptyArchived');
 const activeCountEl = document.getElementById('historyActiveCount');
 const archivedCountEl = document.getElementById('historyArchivedCount');
-const themeToggle = document.getElementById('themeToggle');
-
-initThemeToggle({ toggleBtn: themeToggle });
-
 initViewportObserver();
 
 let query = '';

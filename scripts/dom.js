@@ -19,7 +19,6 @@ export function getElements(){
     fileInput: $('#file'),
     tempInput: $('#temp'),
     citationsCheckbox: $('#citations'),
-    themeToggle: $('#themeToggle'),
     summarySerial: $('#summarySerial'),
     summaryHours: $('#summaryHours'),
     summaryFaults: $('#summaryFaults'),

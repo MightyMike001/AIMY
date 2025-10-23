@@ -10,7 +10,6 @@ import { createChatController } from './chat.js';
 import { setupPersistence, restoreChat, persistHistorySnapshot } from './storage.js';
 import { runTests } from './tests.js';
 import { fmtBytes } from './utils/format.js';
-import { initThemeToggle } from './theme.js';
 import { loadPrechat } from './prechat-storage.js';
 import { initViewportObserver } from './utils/viewport.js';
 import { normalizeWebhookUrl, sanitizeHeaderValue } from './utils/security.js';
@@ -124,10 +123,6 @@ function sharePrechatIntro(){
   prechat.summaryMessageIndex = state.messages.length - 1;
   persistHistorySnapshot(state);
 }
-
-initThemeToggle({
-  toggleBtn: elements.themeToggle
-});
 
 initSettings({
   settingsBtn: elements.settingsBtn,
