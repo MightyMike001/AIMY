@@ -1,7 +1,7 @@
-import initAtomField from './atom-field.js';
+import { createBackground } from '../js/bg-canvas.js';
 
-initAtomField({
+createBackground({
   canvas: '#atom-field',
-  overlay: document.querySelector('.intro__overlay'),
-  logo: document.querySelector('.intro__logo')
+  overlay: '.bg-overlay',
+  logo: '.intro-logo'
 });

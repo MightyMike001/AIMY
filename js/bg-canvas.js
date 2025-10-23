@@ -1,0 +1,20 @@
+import initAtomField from '../scripts/atom-field.js';
+
+export function createBackground({
+  canvas = '#atom-field',
+  overlay = '[data-bg-overlay]',
+  logo = '[data-bg-logo]',
+  activationClass = 'is-active'
+} = {}){
+  const overlayEl = typeof overlay === 'string' ? document.querySelector(overlay) : overlay;
+  const logoEl = typeof logo === 'string' ? document.querySelector(logo) : logo;
+
+  return initAtomField({
+    canvas,
+    overlay: overlayEl || undefined,
+    logo: logoEl || undefined,
+    activationClass
+  });
+}
+
+export default createBackground;
