@@ -42,7 +42,18 @@ function updateToggleLabel(btn, theme){
 }
 
 function applyTheme(theme){
-  document.body?.setAttribute('data-theme', theme === THEMES.DARK ? THEMES.DARK : THEMES.LIGHT);
+  const body = document.body;
+  if(!body){
+    return;
+  }
+  const activeTheme = theme === THEMES.DARK ? THEMES.DARK : THEMES.LIGHT;
+  body.setAttribute('data-theme', activeTheme);
+
+  if(body.classList.contains('background-match')){
+    const isLight = activeTheme === THEMES.LIGHT;
+    body.classList.toggle('light', isLight);
+    body.classList.toggle('dark', !isLight);
+  }
 }
 
 export function initThemeToggle({ toggleBtn }){
