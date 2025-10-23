@@ -1,4 +1,5 @@
 import { loadPrechat, savePrechat, clearPrechat } from './prechat-storage.js';
+import { initViewportObserver } from './utils/viewport.js';
 
 const SERIAL_PATTERN = /^[A-Za-z0-9-]{5,20}$/;
 const HOURS_PATTERN = /^\d{1,6}$/;
@@ -14,6 +15,8 @@ const faultError = document.getElementById('faultCodesError');
 const statusEl = document.getElementById('precheckStatus');
 const submitBtn = document.getElementById('startChat');
 const resetBtn = document.getElementById('resetPrechat');
+
+initViewportObserver();
 
 prefillFromStorage();
 updateFormState();

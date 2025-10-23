@@ -11,11 +11,14 @@ import { runTests } from './tests.js';
 import { fmtBytes } from './utils/format.js';
 import { initThemeToggle } from './theme.js';
 import { loadPrechat } from './prechat-storage.js';
+import { initViewportObserver } from './utils/viewport.js';
 
 const config = loadConfig();
 const elements = getElements();
 const defaultPlaceholder = elements.inputEl ? elements.inputEl.getAttribute('placeholder') || '' : '';
 const PRECHAT_DISABLED_PLACEHOLDER = 'Open AIMY via de startpagina en vul de werkbongegevens in.';
+
+initViewportObserver();
 
 applyComposerAvailability(false);
 hydratePrechatState();
