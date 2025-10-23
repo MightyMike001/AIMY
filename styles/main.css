@@ -101,13 +101,6 @@ body.background-match{
     linear-gradient(185deg, var(--aimy-night-2), var(--aimy-night));
 }
 
-body.background-match.light{
-  background:
-    radial-gradient(115% 125% at 12% 18%, rgba(0,231,255,.22), transparent 65%),
-    radial-gradient(90% 85% at 80% 20%, rgba(200,167,106,.2), transparent 72%),
-    linear-gradient(182deg, #091125, #050910 78%);
-}
-
 body.background-match::before{
   content:"";
   position:fixed;
@@ -226,21 +219,6 @@ body[data-theme="dark"]{
   --surface-soft:rgba(8,16,32,.7);
   --shadow:0 38px 86px rgba(5,9,18,.65),0 18px 42px rgba(5,9,18,.52);
   --shadow-strong:0 48px 110px rgba(5,9,18,.7),0 22px 56px rgba(5,9,18,.58);
-}
-
-body[data-theme="light"]{
-  --ink:#f8fbff;
-  --ink-2:rgba(224,236,255,.85);
-  --ink-3:rgba(174,188,220,.72);
-  --bg:#0a1428;
-  --card:rgba(18,30,56,.82);
-  --card-glass:rgba(12,22,44,.82);
-  --muted:rgba(190,206,240,.68);
-  --border-subtle:rgba(102,148,214,.32);
-  --border-strong:rgba(134,180,244,.4);
-  --surface-soft:rgba(12,22,44,.68);
-  --shadow:0 34px 80px rgba(6,10,20,.6),0 16px 40px rgba(6,10,20,.5);
-  --shadow-strong:0 44px 96px rgba(6,10,20,.64),0 20px 52px rgba(6,10,20,.54);
 }
 
 body.chat-page:not(.background-match){
@@ -511,7 +489,6 @@ body[data-theme="dark"] .history-item-actions .history-delete{
   .prechat-actions{grid-template-columns:1fr}
   .prechat-footer{padding:18px 16px 28px}
   .prechat-quick-actions{flex-direction:column;max-width:100%}
-  .theme-toggle{right:16px;bottom:16px;padding:10px 14px;font-size:13px}
   .history-controls h1{font-size:22px}
   .history-item-title{font-size:17px}
   .history-section-header{flex-direction:column;align-items:flex-start}
@@ -1038,28 +1015,6 @@ body[data-theme="dark"].chat-page .badge{background:rgba(12,20,38,.78);border-co
 .settings-section h4{margin:0;font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ink)}
 .settings-list{margin:6px 0 0 16px;padding:0 0 0 4px;display:flex;flex-direction:column;gap:4px}
 
-.theme-toggle{
-  position:fixed;
-  right:24px;
-  bottom:24px;
-  display:inline-flex;
-  align-items:center;
-  gap:10px;
-  padding:12px 16px;
-  border-radius:999px;
-  border:1px solid rgba(126,168,236,.38);
-  background:linear-gradient(170deg, rgba(16,26,48,.92), rgba(10,18,34,.86));
-  color:var(--ink);
-  font-weight:650;
-  font-size:14px;
-  cursor:pointer;
-  box-shadow:0 36px 78px rgba(0,0,0,.52), inset 0 1px 0 rgba(255,255,255,.1);
-  transition:transform .2s ease, box-shadow .2s ease, background-color .3s ease, color .3s ease;
-  z-index:20;
-}
-.theme-toggle:hover{transform:translateY(-2px);box-shadow:0 46px 102px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.16);}
-.theme-toggle:focus-visible{outline:none;box-shadow:0 0 0 4px var(--ring);}
-
 body[data-theme="dark"] .card,
 body[data-theme="dark"] .tag,
 body[data-theme="dark"] .doc,
@@ -1067,25 +1022,13 @@ body[data-theme="dark"] .bubble,
 body[data-theme="dark"] .badge,
 body[data-theme="dark"] .input,
 body[data-theme="dark"] .composer textarea,
-body[data-theme="dark"] .upload,
-body[data-theme="dark"] .theme-toggle{
+body[data-theme="dark"] .upload{
   background:var(--surface-soft);
 }
 body[data-theme="dark"] .card{box-shadow:var(--shadow);}
 body[data-theme="dark"] .tag:hover{background:rgba(20,30,54,.72);}
 body[data-theme="dark"] .bubble.assistant{border-color:rgba(0,231,255,.4);background:linear-gradient(170deg, rgba(18,30,56,.94), rgba(12,22,44,.88));}
 body[data-theme="dark"] .bubble.user{border-color:rgba(200,167,106,.42);background:linear-gradient(170deg, rgba(20,30,58,.92), rgba(16,20,44,.88));}
-body[data-theme="dark"] .theme-toggle{box-shadow:0 36px 78px rgba(0,0,0,.52);}
-body[data-theme="dark"] .theme-toggle:hover{box-shadow:0 46px 102px rgba(0,0,0,.6);}
-
-body.background-match .theme-toggle{background:linear-gradient(170deg, rgba(16,26,48,.92), rgba(10,18,34,.86));border-color:rgba(126,168,236,.38);box-shadow:0 36px 78px rgba(0,0,0,.52), inset 0 1px 0 rgba(255,255,255,.1);}
-body.background-match .theme-toggle:hover{box-shadow:0 46px 102px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.16);}
-body.background-match .theme-toggle:focus-visible{box-shadow:0 0 0 4px rgba(0,231,255,.3);}
-
-@media (max-width: 600px){
-  .theme-toggle{right:16px;bottom:16px;padding:11px 14px;font-size:13px}
-}
-
 @media (max-width: 900px){
   .title{font-size:17px}
 }
