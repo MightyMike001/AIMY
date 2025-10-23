@@ -91,7 +91,7 @@ function renderList(container, items, archived){
 
 function createHistoryCard(item, archived){
   const card = document.createElement('article');
-  card.className = 'history-item card panel';
+  card.className = 'history-item card';
   card.setAttribute('role', 'listitem');
   card.dataset.id = item.id;
 
@@ -130,14 +130,14 @@ function createHistoryCard(item, archived){
 
   const openBtn = document.createElement('button');
   openBtn.type = 'button';
-  openBtn.className = 'btn primary small';
+  openBtn.className = 'btn btn-primary btn-small';
   openBtn.textContent = 'Openen';
   openBtn.addEventListener('click', () => openChat(item));
   actions.appendChild(openBtn);
 
   const archiveBtn = document.createElement('button');
   archiveBtn.type = 'button';
-  archiveBtn.className = 'btn secondary small';
+  archiveBtn.className = 'btn btn-ghost btn-small';
   archiveBtn.textContent = archived ? 'Terugzetten' : 'Archiveer';
   archiveBtn.addEventListener('click', () => {
     setChatArchived(item.id, !archived);
@@ -147,7 +147,7 @@ function createHistoryCard(item, archived){
 
   const deleteBtn = document.createElement('button');
   deleteBtn.type = 'button';
-  deleteBtn.className = 'btn secondary small history-delete';
+  deleteBtn.className = 'btn btn-accent btn-small history-delete';
   deleteBtn.textContent = 'Verwijderen';
   deleteBtn.addEventListener('click', () => {
     const confirmDelete = window.confirm('Weet je zeker dat je deze chat permanent wilt verwijderen?');

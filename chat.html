@@ -27,54 +27,62 @@
     imagesrcset="assets/DACCFAD1-BABC-4760-9110-77A1D5D402D2.png 1024w"
     imagesizes="(max-width: 768px) 60vw, 420px"
   />
-  <link rel="stylesheet" href="styles/app.css" />
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/app.css" />
 </head>
-<body class="app background-match chat-page" data-theme="dark">
-  <div class="app__background" aria-hidden="true">
-    <canvas id="atom-field" role="presentation"></canvas>
-    <div class="app__overlay" aria-hidden="true"></div>
+<body class="chat-page" data-theme="dark">
+  <div class="bg-scene" aria-hidden="true">
+    <canvas id="atom-field" aria-hidden="true"></canvas>
+    <div class="bg-overlay" aria-hidden="true"></div>
     <img
       src="assets/DACCFAD1-BABC-4760-9110-77A1D5D402D2.png"
       alt=""
       aria-hidden="true"
+      class="bg-logo"
       width="1024"
       height="1024"
-      class="app__logo"
       decoding="async"
       loading="lazy"
+      data-bg-logo
     />
   </div>
 
-  <div class="app__inner">
-    <header class="app-header" role="banner">
-      <div class="app-header__brand">
-        <img
-          src="assets/DACCFAD1-BABC-4760-9110-77A1D5D402D2.png"
-          alt="AIMY-logo"
-          width="72"
-          height="72"
-          class="app-header__mark"
-          decoding="async"
-          fetchpriority="high"
-        />
-        <div class="app-header__copy">
-          <p class="app-header__eyebrow">Motrac Service</p>
-          <h1 class="app-header__title">AIMY AI Assistent</h1>
+  <div class="page-shell">
+    <header class="site-header" role="banner">
+      <div class="app-header card glass">
+        <div class="app-brand">
+          <img
+            src="assets/DACCFAD1-BABC-4760-9110-77A1D5D402D2.png"
+            alt="AIMY-logo"
+            width="72"
+            height="72"
+            class="app-mark"
+            decoding="async"
+            fetchpriority="high"
+          />
+          <div class="app-copy">
+            <p class="app-eyebrow">Motrac Service</p>
+            <h1 class="app-title">AIMY AI Assistent</h1>
+          </div>
         </div>
-      </div>
-      <div class="app-header__cta">
-        <a class="btn btn--ghost btn--small" href="history.html">Chatgeschiedenis</a>
-        <button id="settingsBtn" class="btn btn--ghost btn--small" type="button">Instellingen</button>
-        <span id="ingestStatus" class="badge" role="status" aria-live="polite">Docs: 0</span>
-        <span id="testBadge" class="badge" aria-live="polite">Tests: 0/0</span>
+        <div class="app-actions">
+          <a class="btn btn-ghost btn-small" href="history.html">Chatgeschiedenis</a>
+          <button id="settingsBtn" class="btn btn-ghost btn-small" type="button">Instellingen</button>
+          <div class="chat-status" role="status" aria-live="polite">
+            <span id="ingestStatus" class="badge">Docs: 0</span>
+            <span id="testBadge" class="badge">Tests: 0/0</span>
+          </div>
+        </div>
       </div>
     </header>
 
-    <main class="app-main" role="main">
-      <aside class="panel panel--summary" aria-labelledby="prechatTitle">
-        <div class="panel__header">
-          <h2 id="prechatTitle" class="panel__title">Werkbon</h2>
-          <button id="editPrechat" class="btn btn--ghost btn--small" type="button">Aanpassen</button>
+    <main class="app-main two-column" role="main">
+      <aside class="card surface-panel" aria-labelledby="prechatTitle">
+        <div class="cluster justify-between">
+          <h2 id="prechatTitle">Werkbon</h2>
+          <button id="editPrechat" class="btn btn-ghost btn-small" type="button">Aanpassen</button>
         </div>
         <dl class="summary-list">
           <div class="summary-row">
@@ -92,13 +100,13 @@
         </dl>
       </aside>
 
-      <section class="panel chat" aria-label="Chat">
+      <section class="card chat-panel" aria-label="Chat">
         <div class="chat-toolbar">
-          <div class="chat-toolbar-meta">
+          <div>
             <h2 class="chat-toolbar-title">Actieve sessie</h2>
             <p class="chat-toolbar-sub">AIMY combineert je werkbon en documenten om gericht mee te denken.</p>
           </div>
-          <button id="newChat" class="btn btn--ghost btn--small" type="button" aria-label="Nieuwe chat">Nieuwe chat</button>
+          <button id="newChat" class="btn btn-ghost btn-small" type="button" aria-label="Nieuwe chat">Nieuwe chat</button>
         </div>
 
         <div id="messages" class="messages" role="log" aria-live="polite"></div>
@@ -107,11 +115,12 @@
           <label class="visually-hidden" for="input">Bericht aan AIMY</label>
           <textarea
             id="input"
+            class="input"
             placeholder="Beschrijf de storing… (bijv. Linde E20 toont foutcode 224-01 na koude start)"
             rows="1"
             aria-label="Bericht aan AIMY"
           ></textarea>
-          <button id="send" class="btn" type="button">Stuur</button>
+          <button id="send" class="btn btn-primary" type="button">Stuur</button>
         </div>
       </section>
     </main>
@@ -120,30 +129,30 @@
   <div id="settingsModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
     <div class="modal-card">
       <div class="modal-header">
-        <h2 id="settingsTitle" style="margin:0">Instellingen</h2>
-        <button id="closeSettings" class="btn btn--ghost btn--small" type="button">Sluiten</button>
+        <h2 id="settingsTitle">Instellingen</h2>
+        <button id="closeSettings" class="btn btn-ghost btn-small" type="button">Sluiten</button>
       </div>
       <div class="settings-body">
-        <div class="row" style="justify-content:space-between">
+        <div class="settings-row space-between">
           <span class="tiny">Temperatuur</span>
           <input id="temp" type="range" min="0" max="1" step="0.1" value="0.2" aria-label="Temperatuur" />
         </div>
-        <div class="row" style="align-items:flex-start">
-          <label class="tiny" for="webhookUrl" style="padding-top:6px">Webhook</label>
-          <input id="webhookUrl" class="input grow" type="url" placeholder="https://…/aimy-chat" />
+        <div class="settings-row grow">
+          <label class="tiny" for="webhookUrl">Webhook</label>
+          <input id="webhookUrl" class="input" type="url" placeholder="https://…/aimy-chat" />
         </div>
-        <div class="row" style="align-items:flex-start">
-          <label class="tiny" for="authToken" style="padding-top:6px">API-token</label>
-          <input id="authToken" class="input grow" type="text" placeholder="optioneel" autocomplete="off" />
+        <div class="settings-row grow">
+          <label class="tiny" for="authToken">API-token</label>
+          <input id="authToken" class="input" type="text" placeholder="optioneel" autocomplete="off" />
         </div>
-        <div class="row" style="justify-content:space-between">
+        <div class="settings-row space-between">
           <span class="tiny">Bronverwijzing</span>
-          <label class="row tiny" for="citations" style="gap:0.4rem">
+          <label class="settings-row tiny" for="citations">
             <input id="citations" type="checkbox" checked />
             Toon secties &amp; paginanummers
           </label>
         </div>
-        <p class="tiny" style="margin:4px 0 0">Deze instellingen worden lokaal opgeslagen in je browser.</p>
+        <p class="tiny">Deze instellingen worden lokaal opgeslagen in je browser.</p>
         <label class="upload" id="drop">
           <input id="file" type="file" accept=".pdf,.txt,.doc,.docx,.md,.html,.json,.csv" multiple />
           <div>
