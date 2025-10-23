@@ -1,3 +1,4 @@
+import './background.js';
 import { GREETING } from './constants.js';
 import { state } from './state.js';
 import { getElements } from './dom.js';

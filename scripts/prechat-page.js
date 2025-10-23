@@ -1,3 +1,4 @@
+import './background.js';
 import { loadPrechat, savePrechat, clearPrechat } from './prechat-storage.js';
 import { initThemeToggle } from './theme.js';
 import { initViewportObserver } from './utils/viewport.js';
