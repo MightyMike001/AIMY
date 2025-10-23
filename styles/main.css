@@ -110,7 +110,7 @@ body[data-theme="dark"] header{
   background:linear-gradient(135deg, var(--motrac-red), #ff4d61);
   box-shadow:inset 0 -3px 10px rgba(0,0,0,.2);
 }
-.headings{display:flex;flex-direction:column;gap:4px;min-width:0}
+.headings{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1 1 240px}
 .title{font-size:18px;font-weight:750;letter-spacing:.2px;line-height:1.2}
 .sub{font-size:13px;color:var(--muted)}
 
@@ -209,7 +209,7 @@ body.chat-page .panel{padding:20px 22px}
 .precheck-status{margin:0;padding:10px;border-radius:10px;background:var(--surface-soft);border:1px solid var(--border-subtle)}
 .precheck-status.ok{border-color:rgba(21,128,61,.45);background:rgba(21,128,61,.08)}
 
-.prechat-only{
+.prechat-page{
   min-height:var(--app-height, 100dvh);
   display:flex;
   flex-direction:column;
@@ -217,11 +217,11 @@ body.chat-page .panel{padding:20px 22px}
 }
 .prechat-top{
   display:flex;
-  align-items:center;
-  gap:12px;
-  padding:24px 18px 12px;
+  width:100%;
   max-width:560px;
+  padding:24px 18px 16px;
   margin:0 auto;
+  align-items:flex-start;
 }
 .prechat-top .logo{width:40px;height:40px;font-size:16px}
 .prechat-branding{display:flex;flex-direction:column;gap:6px}
@@ -305,6 +305,20 @@ body[data-theme="dark"] .history-item-actions .history-delete{
   color:var(--err);
 }
 @media (max-width: 720px){
+  .bar{padding:16px 18px;gap:12px;align-items:flex-start}
+  .bar .logo{order:1}
+  .headings{order:2;width:100%}
+  .right{order:3;width:100%;justify-content:flex-start;gap:8px}
+  .right .btn{flex:1 1 140px;justify-content:center}
+  .prechat-top{padding:20px 18px 14px}
+  .prechat-branding{gap:8px}
+  .prechat-title{font-size:24px}
+  .prechat-container{padding:18px 18px 32px;align-items:flex-start}
+  .prechat-card{gap:16px}
+  .prechat-actions{grid-template-columns:1fr}
+  .prechat-footer{padding:18px 16px 28px}
+  .prechat-quick-actions{flex-direction:column;max-width:100%}
+  .theme-toggle{right:16px;bottom:16px;padding:10px 14px;font-size:13px}
   .history-controls h1{font-size:22px}
   .history-item-title{font-size:17px}
   .history-section-header{flex-direction:column;align-items:flex-start}
