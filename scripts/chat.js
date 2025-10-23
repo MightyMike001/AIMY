@@ -2,6 +2,10 @@ import { GREETING, MAX_HISTORY, STREAM_DELAY_MS } from './constants.js';
 import { addMessage, appendStreamChunk } from './messages.js';
 import { resetConversation } from './state.js';
 import { clearChatStorage, persistHistorySnapshot } from './storage.js';
+import { normalizeWebhookUrl, safeStringify } from './utils/security.js';
+
+const REQUEST_TIMEOUT_MS = 15000;
+const DEMO_FALLBACK_MESSAGE = 'Demo-antwoord (n8n URL niet ingesteld). Controleer hoofdschakelaar, noodstop, zekeringen en CAN-bus. Meet accuspanning (>24.0V) en log foutcode 224-01.';
 
 export function createChatController({ state, config, elements }){
   const { messagesEl, inputEl, sendBtn, newChatBtn, tempInput, citationsCheckbox } = elements;
@@ -45,12 +49,17 @@ export function createChatController({ state, config, elements }){
       newChatBtn.disabled = true;
     }
 
+    const targetWebhook = normalizeWebhookUrl(config.N8N_WEBHOOK);
+    const useDemo = !targetWebhook;
+    const controller = useDemo ? null : new AbortController();
+    const timeoutId = useDemo ? null : window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
     try{
       const headers = { 'Content-Type': 'application/json' };
       if(config.AUTH_VALUE){
         headers[config.AUTH_HEADER] = config.AUTH_VALUE;
       }
-      const body = {
+      const payload = {
         chat_id: state.chatId,
         ...sharedQueryFields,
         temperature: tempInput ? Number(tempInput.value) : 0.2,
@@ -75,21 +84,24 @@ export function createChatController({ state, config, elements }){
       };
 
       let data;
-      if(/^https?:\/\//.test(config.N8N_WEBHOOK)){
-        const resp = await fetch(config.N8N_WEBHOOK, {
+      if(useDemo){
+        data = { answer: DEMO_FALLBACK_MESSAGE, citations: [] };
+      }else{
+        const body = safeStringify(payload);
+        if(!body){
+          throw new Error('kon verzoek niet serialiseren');
+        }
+
+        const resp = await fetch(targetWebhook, {
           method: 'POST',
           headers,
-          body: JSON.stringify(body)
+          body,
+          signal: controller.signal
         });
         if(!resp.ok){
-          throw new Error('n8n-webhook niet bereikbaar');
+          throw new Error(`webhook antwoordt met status ${resp.status}`);
         }
         data = await resp.json();
-      }else{
-        data = {
-          answer: 'Demo-antwoord (n8n URL niet ingesteld). Controleer hoofdschakelaar, noodstop, zekeringen en CAN-bus. Meet accuspanning (>24.0V) en log foutcode 224-01.',
-          citations: []
-        };
       }
 
       const answer = (data.answer || '[geen antwoord]').toString();
@@ -103,9 +115,20 @@ export function createChatController({ state, config, elements }){
         appendStreamChunk(state, messagesEl, appendix);
       }
     }catch(err){
-      console.error(err);
-      appendStreamChunk(state, messagesEl, '\n[!] n8n-webhook niet bereikbaar. Controleer de Production URL & eventuele auth.');
+      const aborted = err?.name === 'AbortError';
+      console.error('chat:send failed', { error: err?.message, aborted });
+      if(useDemo){
+        appendStreamChunk(state, messagesEl, '\n[!] Demo-antwoord kon niet worden weergegeven.');
+      }else{
+        const message = aborted
+          ? '\n[!] Timeout: geen antwoord ontvangen van de webhook. Probeer het opnieuw of controleer de verbinding.'
+          : '\n[!] Webhook niet bereikbaar. Controleer de HTTPS-URL en eventuele authenticatie.';
+        appendStreamChunk(state, messagesEl, message);
+      }
     }finally{
+      if(timeoutId){
+        window.clearTimeout(timeoutId);
+      }
       state.streaming = false;
       sendBtn.disabled = !(state.prechat && state.prechat.ready);
       if(newChatBtn){

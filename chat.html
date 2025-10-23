@@ -3,8 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' https:; font-src 'self'; base-uri 'self'; form-action 'self'" />
+  <meta http-equiv="Referrer-Policy" content="same-origin" />
+  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+  <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=()" />
   <title>AIMY – Motrac Service AI Assistent</title>
   <meta name="description" content="Motrac Service AI Assistent: AIMY helpt monteurs storingen oplossen met ingeladen Linde-documentatie." />
+  <meta name="aimy-runtime-config" content='{"N8N_WEBHOOK":"","AUTH_HEADER":"X-AIMY-Token"}' />
   <link rel="stylesheet" href="styles/main.css" />
 </head>
 <body class="chat-page background-match">

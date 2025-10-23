@@ -1,7 +1,7 @@
 export const GREETING = 'Hoi! Ik ben AIMY. Laad Linde-documenten in aan de linkerkant of stel je storingsvraag. Ik geef je een systematische diagnose met veiligheidsstappen, meetwaardes en relevante passages uit de handleidingen.';
 
 export const DEFAULT_CONFIG = {
-  N8N_WEBHOOK: 'https://node01n8n.mit.rd-n.nl/webhook/aimy-chat',
+  N8N_WEBHOOK: '',
   AUTH_HEADER: 'X-AIMY-Token',
   AUTH_VALUE: ''
 };
