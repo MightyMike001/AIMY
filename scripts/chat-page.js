@@ -28,7 +28,7 @@ hydratePrechatState();
 function hydratePrechatState(){
   const stored = loadPrechat();
   if(!stored || !stored.serialNumber || !stored.hours){
-    window.location.replace('index.html');
+    window.location.replace('prechat.html');
     return;
   }
 
@@ -212,7 +212,7 @@ if(elements.newChatBtn){
 
 if(elements.editPrechatBtn){
   elements.editPrechatBtn.addEventListener('click', () => {
-    window.location.href = 'index.html';
+    window.location.href = 'prechat.html';
   });
 }
 
