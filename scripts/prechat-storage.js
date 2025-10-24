@@ -1,11 +1,10 @@
 import { PRECHAT_KEY } from './constants.js';
-import { createPrechatRecord } from '../js/prechat.js';
 
 const STORAGE_KEY = PRECHAT_KEY;
 
 export function loadPrechat(){
   try{
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = sessionStorage.getItem(STORAGE_KEY);
     if(!raw){
       return null;
     }
@@ -13,8 +12,11 @@ export function loadPrechat(){
     if(!data || typeof data !== 'object'){
       return null;
     }
-    const record = createPrechatRecord(data);
-    return record;
+    return {
+      serialNumber: typeof data.serialNumber === 'string' ? data.serialNumber : '',
+      hours: typeof data.hours === 'string' ? data.hours : '',
+      faultCodes: typeof data.faultCodes === 'string' ? data.faultCodes : ''
+    };
   }catch{
     return null;
   }
@@ -22,9 +24,12 @@ export function loadPrechat(){
 
 export function savePrechat(prechat){
   try{
-    const record = createPrechatRecord(prechat);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(record));
-    return record;
+    const payload = {
+      serialNumber: prechat.serialNumber || '',
+      hours: prechat.hours || '',
+      faultCodes: prechat.faultCodes || ''
+    };
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
   }catch{
     /* ignore */
   }
@@ -32,7 +37,7 @@ export function savePrechat(prechat){
 
 export function clearPrechat(){
   try{
-    localStorage.removeItem(STORAGE_KEY);
+    sessionStorage.removeItem(STORAGE_KEY);
   }catch{
     /* ignore */
   }
