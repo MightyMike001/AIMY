@@ -173,55 +173,6 @@ body.app-page .page-shell {
   align-items: stretch;
 }
 
-@media (min-width: 960px) {
-  .app-main.two-column {
-    grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr);
-    align-items: stretch;
-  }
-}
-
-.app-main.two-column > * {
-  min-height: 0;
-  align-self: stretch;
-}
-
-.summary-list {
-  display: grid;
-  gap: var(--s-3);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.summary-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--s-3);
-  padding-bottom: var(--s-2);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.summary-row:last-of-type {
-  border-bottom: none;
-}
-
-.summary-row dt {
-  font-size: var(--fs-2);
-  color: var(--text-dim);
-}
-
-.summary-row dd {
-  margin: 0;
-  font-weight: 600;
-  text-align: right;
-}
-
-.summary-row dd.empty {
-  opacity: 0.72;
-}
-
 .chat-panel {
   display: flex;
   flex-direction: column;
