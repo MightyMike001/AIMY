@@ -3,31 +3,19 @@ import { addMessage, appendStreamChunk } from './messages.js';
 import { resetConversation } from './state.js';
 import { clearChatStorage, persistHistorySnapshot } from './storage.js';
 import { normalizeWebhookUrl, safeStringify } from './utils/security.js';
+import {
+  buildMessageWindow,
+  buildMetadata,
+  preparePrechatPayload,
+  sanitizePrompt,
+  selectDocIds
+} from './domain/conversation.js';
 
 const REQUEST_TIMEOUT_MS = 15000;
-const MAX_PROMPT_LENGTH = 4000;
 const DEMO_FALLBACK_MESSAGE = 'Demo-antwoord (n8n URL niet ingesteld). Controleer hoofdschakelaar, noodstop, zekeringen en CAN-bus. Meet accuspanning (>24.0V) en log foutcode 224-01.';
 
 export function createChatController({ state, config, elements }){
   const { messagesEl, inputEl, sendBtn, newChatBtn, tempInput, citationsCheckbox } = elements;
-
-  function sanitizePrompt(value){
-    if(typeof value !== 'string'){
-      return '';
-    }
-    const trimmed = value.trim();
-    if(trimmed.length <= MAX_PROMPT_LENGTH){
-      return trimmed;
-    }
-    return trimmed.slice(0, MAX_PROMPT_LENGTH);
-  }
-
-  function createHistorySnapshot(messages){
-    return messages.slice(-MAX_HISTORY).map((message) => ({
-      role: message.role === 'user' ? 'user' : 'assistant',
-      content: sanitizePrompt(message.content || '')
-    }));
-  }
 
   async function send(){
     if(!inputEl || !messagesEl || !sendBtn){
@@ -45,18 +33,9 @@ export function createChatController({ state, config, elements }){
     addMessage(state, messagesEl, 'user', text);
     persistHistorySnapshot(state);
     inputEl.value = '';
-    const history = createHistorySnapshot(state.messages);
-    const docIds = state.docs
-      .map(doc => (typeof doc?.id === 'string' ? doc.id : String(doc?.id || '')).trim())
-      .filter(id => Boolean(id))
-      .slice(0, 50);
-    const uniqueDocIds = Array.from(new Set(docIds));
-    const prechat = state.prechat || {
-      serialNumber: '',
-      hours: '',
-      faultCodes: '',
-      ready: false
-    };
+    const history = buildMessageWindow(state.messages, { limit: MAX_HISTORY });
+    const uniqueDocIds = selectDocIds(state.docs);
+    const prechat = preparePrechatPayload(state.prechat);
 
     const sharedQueryFields = {
       query: text,
@@ -104,11 +83,7 @@ export function createChatController({ state, config, elements }){
         doc_ids: uniqueDocIds,
         documents: uniqueDocIds,
         prechat,
-        metadata: {
-          serialNumber: prechat.serialNumber,
-          hours: prechat.hours,
-          faultCodes: prechat.faultCodes
-        },
+        metadata: buildMetadata(prechat),
         serial_number: prechat.serialNumber,
         serienummer: prechat.serialNumber,
         hours: prechat.hours,
