@@ -80,6 +80,8 @@ body.app-page .page-shell {
   flex: 1 1 auto;
   min-height: 0;
   overflow: auto;
+  align-content: stretch;
+  align-items: stretch;
 }
 
 @media (min-width: 960px) {
@@ -92,6 +94,7 @@ body.app-page .page-shell {
 
 .app-main.two-column > * {
   min-height: 0;
+  align-self: stretch;
 }
 
 .summary-list {
@@ -135,6 +138,14 @@ body.app-page .page-shell {
   flex-direction: column;
   gap: var(--s-4);
   min-height: 0;
+  flex: 1 1 auto;
+}
+
+.session-panel {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 }
 
 .chat-toolbar {
