@@ -1,7 +1,7 @@
-import initAtomField from '../scripts/atom-field.js';
+import initProtonField from '../scripts/proton-field.js';
 
 export function createBackground({
-  canvas = '#atom-field',
+  canvas = '#proton-field',
   overlay = '[data-bg-overlay]',
   logo = '[data-bg-logo]',
   activationClass = 'is-active'
@@ -9,7 +9,7 @@ export function createBackground({
   const overlayEl = typeof overlay === 'string' ? document.querySelector(overlay) : overlay;
   const logoEl = typeof logo === 'string' ? document.querySelector(logo) : logo;
 
-  return initAtomField({
+  return initProtonField({
     canvas,
     overlay: overlayEl || undefined,
     logo: logoEl || undefined,
