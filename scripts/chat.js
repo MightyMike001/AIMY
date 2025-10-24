@@ -12,12 +12,89 @@ import {
 } from './domain/conversation.js';
 
 const REQUEST_TIMEOUT_MS = 15000;
+const MAX_RETRY_ATTEMPTS = 3;
+const RETRY_DELAYS_MS = [1000, 2000, 4000];
 const DEMO_FALLBACK_MESSAGE = 'Demo-antwoord (n8n URL niet ingesteld). Controleer hoofdschakelaar, noodstop, zekeringen en CAN-bus. Meet accuspanning (>24.0V) en log foutcode 224-01.';
+
+function wait(ms){
+  return new Promise(resolve => {
+    window.setTimeout(resolve, ms);
+  });
+}
+
+function getLastAssistantIndex(state){
+  if(!state?.messages || !state.messages.length){
+    return -1;
+  }
+  for(let i = state.messages.length - 1; i >= 0; i -= 1){
+    if(state.messages[i]?.role === 'assistant'){
+      return i;
+    }
+  }
+  return -1;
+}
+
+function showAssistantError(state, messagesEl, message, onRetry){
+  const lastBubble = messagesEl?.lastElementChild;
+  if(!lastBubble || !lastBubble.classList.contains('assistant')){
+    return;
+  }
+  const contentEl = lastBubble.querySelector('.content');
+  if(!contentEl){
+    return;
+  }
+  lastBubble.classList.remove('loading');
+  contentEl.innerHTML = '';
+
+  const messageEl = document.createElement('p');
+  messageEl.className = 'chat-error';
+  messageEl.textContent = message;
+  contentEl.appendChild(messageEl);
+
+  if(typeof onRetry === 'function'){
+    const retryBtn = document.createElement('button');
+    retryBtn.type = 'button';
+    retryBtn.className = 'btn btn-ghost btn-small chat-retry';
+    retryBtn.textContent = 'Opnieuw';
+    retryBtn.addEventListener('click', () => {
+      retryBtn.disabled = true;
+      onRetry();
+    });
+    contentEl.appendChild(retryBtn);
+  }
+
+  const lastAssistant = getLastAssistantIndex(state);
+  if(lastAssistant > -1){
+    state.messages[lastAssistant].content = message;
+  }
+}
+
+function createTimeoutSignal(){
+  if(typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function'){
+    return {
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      cleanup(){},
+      cancel(){}
+    };
+  }
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  return {
+    signal: controller.signal,
+    cleanup(){
+      window.clearTimeout(timeoutId);
+    },
+    cancel(){
+      controller.abort();
+    }
+  };
+}
 
 export function createChatController({ state, config, elements }){
   const { messagesEl, inputEl, sendBtn, newChatBtn, tempInput, citationsCheckbox } = elements;
 
-  async function send(){
+  async function send(options = {}){
+    const { retryContent } = options;
     if(!inputEl || !messagesEl || !sendBtn){
       return;
     }
@@ -26,13 +103,17 @@ export function createChatController({ state, config, elements }){
       return;
     }
 
-    const text = sanitizePrompt(inputEl.value);
+    const providedText = typeof retryContent === 'string' ? retryContent : inputEl.value;
+    const text = sanitizePrompt(providedText);
     if(!text || state.streaming){
       return;
     }
-    addMessage(state, messagesEl, 'user', text);
-    persistHistorySnapshot(state);
-    inputEl.value = '';
+    const isRetry = typeof retryContent === 'string';
+    if(!isRetry){
+      addMessage(state, messagesEl, 'user', text);
+      persistHistorySnapshot(state);
+      inputEl.value = '';
+    }
     const history = buildMessageWindow(state.messages, { limit: MAX_HISTORY });
     const uniqueDocIds = selectDocIds(state.docs);
     const prechat = preparePrechatPayload(state.prechat);
@@ -53,19 +134,6 @@ export function createChatController({ state, config, elements }){
 
     const targetWebhook = normalizeWebhookUrl(config.N8N_WEBHOOK);
     const useDemo = !targetWebhook;
-    let timeoutId = null;
-    let controller = null;
-    let signal = null;
-    if(!useDemo){
-      if(typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function'){
-        signal = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
-      }else{
-        controller = new AbortController();
-        signal = controller.signal;
-        timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-      }
-    }
-
     try{
       const headers = { 'Content-Type': 'application/json' };
       if(config.AUTH_VALUE){
@@ -99,17 +167,51 @@ export function createChatController({ state, config, elements }){
         if(!body){
           throw new Error('kon verzoek niet serialiseren');
         }
-
-        const resp = await fetch(targetWebhook, {
-          method: 'POST',
-          headers,
-          body,
-          signal
-        });
-        if(!resp.ok){
-          throw new Error(`webhook antwoordt met status ${resp.status}`);
+        let lastError = null;
+        for(let attempt = 0; attempt < MAX_RETRY_ATTEMPTS; attempt += 1){
+          const { signal, cleanup, cancel } = createTimeoutSignal();
+          try{
+            const resp = await fetch(targetWebhook, {
+              method: 'POST',
+              headers,
+              body,
+              signal
+            });
+            cleanup();
+            if(resp.status >= 500){
+              lastError = new Error(`webhook antwoordt met status ${resp.status}`);
+              if(attempt < MAX_RETRY_ATTEMPTS - 1){
+                await wait(RETRY_DELAYS_MS[attempt] || RETRY_DELAYS_MS[RETRY_DELAYS_MS.length - 1]);
+                continue;
+              }
+              throw lastError;
+            }
+            if(!resp.ok){
+              throw new Error(`webhook antwoordt met status ${resp.status}`);
+            }
+            data = await resp.json();
+            lastError = null;
+            break;
+          }catch(err){
+            cleanup();
+            const aborted = err?.name === 'AbortError' || err?.name === 'TimeoutError';
+            const networkIssue = err instanceof TypeError;
+            lastError = err;
+            if(attempt < MAX_RETRY_ATTEMPTS - 1 && (aborted || networkIssue)){
+              await wait(RETRY_DELAYS_MS[attempt] || RETRY_DELAYS_MS[RETRY_DELAYS_MS.length - 1]);
+              continue;
+            }
+            if(attempt < MAX_RETRY_ATTEMPTS - 1 && lastError?.message?.includes('status 5')){
+              await wait(RETRY_DELAYS_MS[attempt] || RETRY_DELAYS_MS[RETRY_DELAYS_MS.length - 1]);
+              continue;
+            }
+            cancel?.();
+            throw err;
+          }
         }
-        data = await resp.json();
+        if(lastError){
+          throw lastError;
+        }
       }
 
       const answer = (data.answer || '[geen antwoord]').toString();
@@ -128,16 +230,14 @@ export function createChatController({ state, config, elements }){
       if(useDemo){
         appendStreamChunk(state, messagesEl, '\n[!] Demo-antwoord kon niet worden weergegeven.');
       }else{
-        const message = aborted
-          ? '\n[!] Timeout: geen antwoord ontvangen van de webhook. Probeer het opnieuw of controleer de verbinding.'
-          : '\n[!] Webhook niet bereikbaar. Controleer de HTTPS-URL en eventuele authenticatie.';
-        appendStreamChunk(state, messagesEl, message);
+        const retryMessage = aborted
+          ? 'Timeout: geen antwoord ontvangen van de webhook. Controleer je verbinding en probeer het opnieuw.'
+          : 'AIMY kon geen verbinding maken met de webhook. Controleer de HTTPS-URL of authenticatie en probeer het opnieuw.';
+        showAssistantError(state, messagesEl, retryMessage, () => {
+          send({ retryContent: text });
+        });
       }
     }finally{
-      if(timeoutId){
-        window.clearTimeout(timeoutId);
-      }
-      controller?.abort();
       state.streaming = false;
       sendBtn.disabled = !(state.prechat && state.prechat.ready);
       if(newChatBtn){
