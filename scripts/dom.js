@@ -22,6 +22,7 @@ export function getElements(){
     summarySerial: $('#summarySerial'),
     summaryHours: $('#summaryHours'),
     summaryFaults: $('#summaryFaults'),
-    editPrechatBtn: $('#editPrechat')
+    editPrechatBtn: $('#editPrechat'),
+    bannerInfo: $('#banner-info')
   };
 }
