@@ -223,6 +223,25 @@ async function commitWebhookInput({ forcePing = false } = {}){
   }
 }
 
+function persistToken(){
+  if(!elements.authInput){
+    return;
+  }
+  const sanitized = sanitizeHeaderValue(elements.authInput.value);
+  if(elements.authInput.value !== sanitized){
+    elements.authInput.value = sanitized;
+  }
+  if(config.AUTH_VALUE !== sanitized){
+    config.AUTH_VALUE = sanitized;
+  }
+  persistConfig(config);
+  if(elements.webhookInput && elements.webhookInput.value.trim()){
+    commitWebhookInput({ forcePing: true });
+  }else if(elements.webhookInput){
+    handleWebhookInputEvent();
+  }
+}
+
 initViewportObserver();
 
 applyComposerAvailability(false);
@@ -378,7 +397,14 @@ function sharePrechatIntro(){
 initSettings({
   settingsBtn: elements.settingsBtn,
   settingsModal: elements.settingsModal,
-  closeSettingsBtn: elements.closeSettingsBtn
+  closeSettingsBtn: elements.closeSettingsBtn,
+  webhookInput: elements.webhookInput,
+  authInput: elements.authInput,
+  citationsCheckbox: elements.citationsCheckbox,
+  config,
+  onWebhookInput: handleWebhookInputEvent,
+  onWebhookCommit: commitWebhookInput,
+  onTokenPersist: persistToken
 });
 
 const restoreResult = restoreChatState(state);
@@ -411,38 +437,6 @@ setupIngest({
 
 if(webhookStatusEl){
   renderWebhookStatus(lastPingSnapshot.status);
-}
-
-if(elements.webhookInput){
-  elements.webhookInput.value = config.N8N_WEBHOOK;
-  handleWebhookInputEvent();
-  const commit = () => {
-    commitWebhookInput();
-  };
-  elements.webhookInput.addEventListener('input', handleWebhookInputEvent);
-  elements.webhookInput.addEventListener('change', commit);
-  elements.webhookInput.addEventListener('blur', commit);
-}
-
-if(elements.authInput){
-  elements.authInput.value = config.AUTH_VALUE;
-  const persistToken = () => {
-    const sanitized = sanitizeHeaderValue(elements.authInput.value);
-    if(elements.authInput.value !== sanitized){
-      elements.authInput.value = sanitized;
-    }
-    if(config.AUTH_VALUE !== sanitized){
-      config.AUTH_VALUE = sanitized;
-    }
-    persistConfig(config);
-    if(elements.webhookInput && elements.webhookInput.value.trim()){
-      commitWebhookInput({ forcePing: true });
-    }else if(elements.webhookInput){
-      handleWebhookInputEvent();
-    }
-  };
-  elements.authInput.addEventListener('change', persistToken);
-  elements.authInput.addEventListener('blur', persistToken);
 }
 
 if(elements.webhookInput && config.N8N_WEBHOOK){

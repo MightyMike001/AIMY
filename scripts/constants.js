@@ -6,7 +6,7 @@ export const DEFAULT_CONFIG = {
   AUTH_VALUE: ''
 };
 
-export const CONFIG_KEY = 'aimy-config';
+export const CONFIG_KEY = 'aimy.settings.v1';
 export const CHAT_KEY = 'aimy-chat';
 export const CHAT_HISTORY_KEY = 'aimy.chat-history';
 export const PRECHAT_KEY = 'aimy.prechat';

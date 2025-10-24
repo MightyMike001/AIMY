@@ -1,6 +1,8 @@
 import { CONFIG_KEY, DEFAULT_CONFIG } from './constants.js';
 import { normalizeWebhookUrl, readRuntimeConfig, sanitizeHeaderName, sanitizeHeaderValue, safeStringify } from './utils/security.js';
 
+const LEGACY_CONFIG_KEYS = ['aimy-config'];
+
 function applyConfig(base, source){
   if(!source || typeof source !== 'object'){
     return;
@@ -23,7 +25,15 @@ export function loadConfig(){
   applyConfig(config, runtimeConfig);
 
   try{
-    const raw = localStorage.getItem(CONFIG_KEY);
+    let raw = localStorage.getItem(CONFIG_KEY);
+    if(!raw){
+      for(const key of LEGACY_CONFIG_KEYS){
+        raw = localStorage.getItem(key);
+        if(raw){
+          break;
+        }
+      }
+    }
     if(raw){
       const stored = JSON.parse(raw);
       applyConfig(config, stored);
@@ -36,7 +46,21 @@ export function loadConfig(){
 
 export function persistConfig(config){
   try{
+    let existing = {};
+    try{
+      const raw = localStorage.getItem(CONFIG_KEY);
+      if(raw){
+        const parsed = JSON.parse(raw);
+        if(parsed && typeof parsed === 'object'){
+          existing = parsed;
+        }
+      }
+    }catch{
+      existing = {};
+    }
+
     const snapshot = {
+      ...existing,
       N8N_WEBHOOK: normalizeWebhookUrl(config.N8N_WEBHOOK),
       AUTH_HEADER: sanitizeHeaderName(config.AUTH_HEADER),
       AUTH_VALUE: sanitizeHeaderValue(config.AUTH_VALUE)
@@ -47,6 +71,13 @@ export function persistConfig(config){
     const serialized = safeStringify(snapshot);
     if(serialized){
       localStorage.setItem(CONFIG_KEY, serialized);
+      for(const key of LEGACY_CONFIG_KEYS){
+        try{
+          localStorage.removeItem(key);
+        }catch{
+          /* ignore */
+        }
+      }
     }
   }catch{
     /* ignore */
