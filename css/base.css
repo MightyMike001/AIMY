@@ -132,31 +132,39 @@ textarea {
   z-index: -2;
   pointer-events: none;
   overflow: hidden;
-  background: var(--bg);
+  background: radial-gradient(circle at 50% 35%, #091327 0%, #050916 45%, #01030a 100%);
 }
 
 .bg-scene::before,
 .bg-scene::after {
   content: '';
   position: absolute;
-  inset: 0;
+  inset: -20%;
   pointer-events: none;
+  mix-blend-mode: screen;
 }
 
 .bg-scene::before {
   z-index: 0;
-  background:
-    radial-gradient(120% 120% at 18% 12%, rgba(64, 145, 255, 0.18), transparent 60%),
-    radial-gradient(95% 85% at 82% 18%, rgba(160, 0, 32, 0.2), transparent 70%),
-    linear-gradient(180deg, #0a1424, var(--bg));
+  background-image:
+    radial-gradient(180px 180px at 32px 48px, rgba(94, 210, 255, 0.22), rgba(94, 210, 255, 0)),
+    radial-gradient(240px 240px at 160px 120px, rgba(255, 112, 204, 0.18), rgba(255, 112, 204, 0)),
+    radial-gradient(280px 280px at 92px 200px, rgba(148, 120, 255, 0.2), rgba(148, 120, 255, 0));
+  background-size: 320px 320px, 420px 420px, 520px 520px;
+  opacity: 0.58;
+  animation: proton-drift 48s linear infinite;
 }
 
 .bg-scene::after {
   z-index: 1;
-  background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160"%3E%3Crect width="1" height="1" fill="rgba(255,255,255,0.02)"/%3E%3C/svg%3E');
-  background-size: 160px 160px;
-  opacity: 0.45;
-  mix-blend-mode: screen;
+  background-image:
+    radial-gradient(220px 220px at 180px 60px, rgba(64, 188, 255, 0.16), rgba(64, 188, 255, 0)),
+    radial-gradient(260px 260px at 80px 200px, rgba(255, 142, 206, 0.14), rgba(255, 142, 206, 0)),
+    radial-gradient(240px 240px at 200px 220px, rgba(124, 96, 255, 0.16), rgba(124, 96, 255, 0));
+  background-size: 420px 420px, 520px 520px, 460px 460px;
+  filter: blur(18px);
+  opacity: 0.42;
+  animation: proton-drift-reverse 68s linear infinite;
 }
 
 .bg-scene canvas {
@@ -165,39 +173,29 @@ textarea {
   width: 100%;
   height: 100%;
   display: block;
-  filter: saturate(1.1);
+  filter: saturate(1.18);
   z-index: 2;
+  mix-blend-mode: screen;
 }
 
-.bg-overlay {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 50% 45%, rgba(10, 24, 52, 0.22), transparent 68%),
-    radial-gradient(circle at 18% 76%, rgba(64, 145, 255, 0.12), transparent 72%);
-  backdrop-filter: blur(12px) saturate(120%);
-  opacity: 0;
-  transition: opacity 0.6s ease;
-  z-index: 3;
+@keyframes proton-drift {
+  from {
+    transform: translate3d(-4%, -3%, 0) rotate(0deg) scale(1.05);
+  }
+
+  to {
+    transform: translate3d(6%, 5%, 0) rotate(360deg) scale(1.12);
+  }
 }
 
-.bg-overlay.is-active {
-  opacity: 1;
-}
+@keyframes proton-drift-reverse {
+  from {
+    transform: translate3d(5%, 6%, 0) rotate(0deg) scale(1.08);
+  }
 
-.bg-logo {
-  position: absolute;
-  inset: 50% auto auto 50%;
-  transform: translate(-50%, -50%);
-  width: min(60vw, 360px);
-  opacity: 0.1;
-  filter: drop-shadow(0 42px 96px rgba(0, 0, 0, 0.65));
-  transition: opacity 0.6s ease;
-  pointer-events: none;
-  z-index: 4;
-}
-
-.bg-logo.is-ready {
-  opacity: 0.22;
+  to {
+    transform: translate3d(-5%, -4%, 0) rotate(-360deg) scale(1.02);
+  }
 }
 
 .ring {
