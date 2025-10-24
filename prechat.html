@@ -38,13 +38,29 @@
       <main class="app-main" role="main">
         <article class="card prechat-card" aria-labelledby="prechatHeading">
           <header class="prechat-header">
-            <div class="prechat-logo" aria-hidden="true">
-              <img src="assets/DACCFAD1-BABC-4760-9110-77A1D5D402D2.png" alt="" width="48" height="48" />
+            <div class="prechat-heading">
+              <div class="prechat-logo" aria-hidden="true">
+                <img src="assets/DACCFAD1-BABC-4760-9110-77A1D5D402D2.png" alt="" width="48" height="48" />
+              </div>
+              <div class="stack-sm">
+                <h2 id="prechatHeading">Vul je werkbongegevens in</h2>
+                <p class="hint">We bewaren alles lokaal en gebruiken het alleen wanneer je AIMY start.</p>
+              </div>
             </div>
-            <div class="stack-sm">
-              <h2 id="prechatHeading">Vul je werkbongegevens in</h2>
-              <p class="hint">We bewaren alles lokaal en gebruiken het alleen wanneer je AIMY start.</p>
-            </div>
+            <a class="btn btn-ghost btn-icon prechat-history" href="history.html">
+              <span class="visually-hidden">Bekijk chatgeschiedenis</span>
+              <svg
+                aria-hidden="true"
+                focusable="false"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  fill="currentColor"
+                  d="M12 5a7 7 0 1 1-6.93 6H3.5a.5.5 0 0 1-.5-.5v-6a.5.5 0 0 1 1 0v4.7A7 7 0 0 1 19 12a7 7 0 0 1-7 7a7 7 0 0 1 0-14Zm.5 3.25v3.19l2.41 1.45a.75.75 0 1 1-.76 1.3l-2.8-1.69a.75.75 0 0 1-.36-.64V8.25a.75.75 0 0 1 1.5 0Z"
+                />
+              </svg>
+            </a>
           </header>
 
           <form id="precheckForm" class="stack" novalidate>
@@ -117,9 +133,6 @@
       </main>
     </div>
 
-    <nav class="quick-actions" aria-label="Snelle acties">
-      <a class="btn btn-ghost btn-pill" href="history.html">Bekijk chatgeschiedenis</a>
-    </nav>
   </div>
 
   <script type="module" src="scripts/prechat-page.js"></script>

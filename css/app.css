@@ -363,8 +363,31 @@ body.app-page .page-shell {
 .prechat-header {
   display: flex;
   flex-wrap: wrap;
+  align-items: flex-start;
   gap: var(--s-3);
+}
+
+.prechat-heading {
+  display: inline-flex;
   align-items: center;
+  gap: var(--s-3);
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.prechat-history {
+  margin-left: auto;
+  align-self: flex-start;
+}
+
+@media (max-width: 600px) {
+  .prechat-header {
+    gap: var(--s-2);
+  }
+
+  .prechat-history {
+    margin-left: auto;
+  }
 }
 
 .prechat-logo {
@@ -413,30 +436,6 @@ body.app-page .page-shell {
   color: #f9a64f;
 }
 
-.quick-actions {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--s-6));
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-3);
-  justify-content: center;
-  padding: 0 var(--s-4);
-}
-
-.quick-actions .btn {
-  flex: 1 1 auto;
-  justify-content: center;
-  min-width: 180px;
-}
-
-@media (max-width: 640px) {
-  .quick-actions {
-    flex-direction: column;
-    align-items: stretch;
-  }
-}
 
 .badge + .badge {
   margin-left: var(--s-2);
