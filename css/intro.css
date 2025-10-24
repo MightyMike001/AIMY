@@ -21,12 +21,26 @@ body.intro-page {
   color: var(--text-dim);
 }
 
-.intro-logo {
+.intro-logo-wrapper {
+  position: relative;
   width: min(58vw, 320px);
   max-width: 100%;
   border-radius: var(--r-lg);
   box-shadow: 0 32px 68px rgba(0, 0, 0, 0.55);
   background: rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.intro-logo-wrapper:focus-visible {
+  outline: 2px solid rgba(114, 163, 255, 0.92);
+  outline-offset: 6px;
+}
+
+.intro-logo {
+  display: block;
+  width: 100%;
+  border-radius: inherit;
   opacity: 0;
   transform: translate3d(0, 18px, 0) scale(0.97);
   transition: transform 0.56s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 0.32s ease;
@@ -35,6 +49,26 @@ body.intro-page {
 .intro-logo.is-ready {
   opacity: 1;
   transform: translate3d(0, 0, 0) scale(1);
+}
+
+.intro-logo-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.32s ease;
+  pointer-events: none;
+}
+
+.intro-logo-wrapper.is-playing .intro-logo-video {
+  opacity: 1;
+}
+
+.intro-logo-wrapper.is-playing .intro-logo {
+  opacity: 0;
 }
 
 .intro-cta {
@@ -65,5 +99,9 @@ body.intro-page {
 
   .intro-logo.is-ready {
     transform: none;
+  }
+
+  .intro-logo-video {
+    transition: none;
   }
 }
