@@ -26,6 +26,8 @@ if(logoWrapper && logoVideo){
     }
 
     logoWrapper.classList.add('is-playing');
+    logoVideo.muted = true;
+    logoVideo.playsInline = true;
     logoVideo.currentTime = 0;
 
     const playPromise = logoVideo.play();
@@ -47,6 +49,7 @@ if(logoWrapper && logoVideo){
   }
 
   logoWrapper.addEventListener('click', startPlayback);
+  logoWrapper.addEventListener('pointerdown', startPlayback, { passive: true });
   logoWrapper.addEventListener('keydown', handleKeydown);
   logoVideo.addEventListener('error', resetPlayback);
 }
