@@ -207,7 +207,7 @@ body.app-page .page-shell {
 }
 
 .session-panel {
-  height: 100vh;
+  max-height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
