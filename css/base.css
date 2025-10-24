@@ -214,8 +214,7 @@ textarea {
 #aimy-page .intro-shell,
 #aimy-page nav,
 #aimy-page header,
-#aimy-page footer,
-#aimy-page .modal {
+#aimy-page footer {
   position: relative;
   z-index: 2;
 }
