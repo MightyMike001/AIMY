@@ -1,5 +1,4 @@
 import { safeRandomId } from './random.js';
-import { ensureFaultCodeList, formatFaultCodes } from '../../js/prechat.js';
 
 const DEFAULT_DOC_NAME = 'Onbekend document';
 const DEFAULT_DOC_PREFIX = 'doc';
@@ -118,15 +117,11 @@ export function normalizeHistoryRecord(item, { nowIso = new Date().toISOString()
   });
   const messages = mapMessages(item.messages);
 
-  const faultCodeList = ensureFaultCodeList(item.faultCodeList || item.faultCodes);
-  const faultCodes = formatFaultCodes(faultCodeList);
-
   return {
     id: item.id,
     title: toStringOr(item.title),
     serialNumber: toStringOr(item.serialNumber),
-    faultCodes,
-    faultCodeList,
+    faultCodes: toStringOr(item.faultCodes),
     hours: toStringOr(item.hours),
     createdAt: ensureIsoString(item.createdAt, nowIso),
     updatedAt: ensureIsoString(item.updatedAt, nowIso),

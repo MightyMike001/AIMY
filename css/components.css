@@ -54,8 +54,7 @@
 }
 
 .btn:focus-visible {
-  outline: 3px solid rgba(64, 145, 255, 0.75);
-  outline-offset: 2px;
+  outline: none;
   box-shadow: 0 0 0 2px rgba(64, 145, 255, 0.45), 0 22px 40px rgba(0, 0, 0, 0.45);
 }
 
@@ -104,11 +103,10 @@ textarea {
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.input:focus-visible,
-select:focus-visible,
-textarea:focus-visible {
-  outline: 3px solid rgba(64, 145, 255, 0.65);
-  outline-offset: 2px;
+.input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
   border-color: rgba(64, 145, 255, 0.65);
   box-shadow: 0 0 0 2px rgba(64, 145, 255, 0.25);
 }

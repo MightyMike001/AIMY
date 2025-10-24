@@ -15,15 +15,6 @@ html {
   scroll-behavior: smooth;
 }
 
-:focus-visible {
-  outline: 3px solid rgba(64, 145, 255, 0.85);
-  outline-offset: 3px;
-}
-
-:focus:not(:focus-visible) {
-  outline: none;
-}
-
 body {
   margin: 0;
   height: 100%;
