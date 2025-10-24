@@ -23,6 +23,7 @@ body.intro-page {
 
 .intro-logo-wrapper {
   position: relative;
+  display: grid;
   width: min(58vw, 320px);
   max-width: 100%;
   border-radius: var(--r-lg);
@@ -46,6 +47,11 @@ body.intro-page {
   transition: transform 0.56s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 0.32s ease;
 }
 
+.intro-logo,
+.intro-logo-video {
+  grid-area: 1 / 1;
+}
+
 .intro-logo.is-ready {
   opacity: 1;
   transform: translate3d(0, 0, 0) scale(1);
@@ -53,7 +59,10 @@ body.intro-page {
 
 .intro-logo-video {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   width: 100%;
   height: 100%;
   border-radius: inherit;
