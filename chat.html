@@ -27,10 +27,10 @@
     imagesrcset="assets/DACCFAD1-BABC-4760-9110-77A1D5D402D2.png 1024w"
     imagesizes="(max-width: 768px) 60vw, 420px"
   />
-  <link rel="stylesheet" href="css/tokens.css" />
-  <link rel="stylesheet" href="css/base.css" />
-  <link rel="stylesheet" href="css/components.css" />
-  <link rel="stylesheet" href="css/app.css" />
+  <link rel="stylesheet" href="css/tokens.css?v=20251024" />
+  <link rel="stylesheet" href="css/base.css?v=20251024" />
+  <link rel="stylesheet" href="css/components.css?v=20251024" />
+  <link rel="stylesheet" href="css/app.css?v=20251024" />
 </head>
 <body class="chat-page" data-theme="dark">
   <div id="aimy-page">
@@ -57,8 +57,8 @@
             </div>
           </div>
           <div class="app-actions">
-            <a class="btn btn-ghost btn-small" href="history.html">Chatgeschiedenis</a>
-            <button id="settingsBtn" class="btn btn-ghost btn-small" type="button">Instellingen</button>
+            <a class="btn btn-ghost btn-small" href="history.html" aria-label="Open chatgeschiedenis">Chatgeschiedenis</a>
+            <button id="settingsBtn" class="btn btn-ghost btn-small" type="button" aria-label="Open instellingen">Instellingen</button>
             <div class="chat-status" role="status" aria-live="polite">
               <span id="ingestStatus" class="badge">Docs: 0</span>
               <span id="testBadge" class="badge">Tests: 0/0</span>
@@ -107,7 +107,7 @@
               rows="1"
               aria-label="Bericht aan AIMY"
             ></textarea>
-            <button id="send" class="btn btn-primary" type="button">Stuur</button>
+            <button id="send" class="btn btn-primary" type="button" aria-label="Stuur bericht">Stuur</button>
           </div>
         </section>
       </main>
@@ -117,7 +117,7 @@
       <div class="modal-card">
         <div class="modal-header">
           <h2 id="settingsTitle">Instellingen</h2>
-          <button id="closeSettings" class="btn btn-ghost btn-small" type="button">Sluiten</button>
+          <button id="closeSettings" class="btn btn-ghost btn-small" type="button" aria-label="Sluit instellingen">Sluiten</button>
         </div>
         <div class="settings-body">
           <div class="settings-row space-between">
@@ -159,6 +159,6 @@
     </div>
   </div>
 
-  <script type="module" src="scripts/chat-page.js"></script>
+  <script type="module" src="scripts/chat-page.js?v=20251024"></script>
 </body>
 </html>

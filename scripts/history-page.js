@@ -3,6 +3,7 @@ import { loadChatHistory, setChatArchived, removeChatFromHistory, markChatOpened
 import { savePrechat } from './prechat-storage.js';
 import { CHAT_KEY } from './constants.js';
 import { initViewportObserver } from './utils/viewport.js';
+import { debounce, extractSearchTokens, filterHistoryItems, highlightMatches, toDisplayFaultCodes } from '../js/history.js';
 
 const searchInput = document.getElementById('historySearch');
 const activeListEl = document.getElementById('historyActiveList');
@@ -13,15 +14,19 @@ const activeCountEl = document.getElementById('historyActiveCount');
 const archivedCountEl = document.getElementById('historyArchivedCount');
 initViewportObserver();
 
-let query = '';
 let historyItems = [];
+let searchTokens = [];
 
 refreshHistory();
 
 if(searchInput){
-  searchInput.addEventListener('input', (event) => {
-    query = event.target.value || '';
+  const handleSearch = debounce((value) => {
+    const normalized = value || '';
+    searchTokens = extractSearchTokens(normalized);
     render();
+  }, 300);
+  searchInput.addEventListener('input', (event) => {
+    handleSearch(event.target.value || '');
   });
 }
 
@@ -41,10 +46,7 @@ function refreshHistory(){
 }
 
 function render(){
-  const normalizedQuery = query.trim().toLowerCase();
-  const filtered = normalizedQuery
-    ? historyItems.filter(item => matchesQuery(item, normalizedQuery))
-    : historyItems.slice();
+  const filtered = filterHistoryItems(historyItems, searchTokens);
 
   const active = filtered.filter(item => !item.archived);
   const archived = filtered.filter(item => item.archived);
@@ -52,29 +54,14 @@ function render(){
   updateCount(activeCountEl, active.length);
   updateCount(archivedCountEl, archived.length);
 
-  renderList(activeListEl, active, false);
-  renderList(archivedListEl, archived, true);
+  renderList(activeListEl, active, false, searchTokens);
+  renderList(archivedListEl, archived, true, searchTokens);
 
   toggleEmpty(activeEmptyEl, active.length === 0);
   toggleEmpty(archivedEmptyEl, archived.length === 0);
 }
 
-function matchesQuery(item, normalizedQuery){
-  const haystacks = [
-    item.title,
-    item.serialNumber,
-    item.faultCodes,
-    item.hours
-  ];
-  const preview = getPreview(item);
-  if(preview){
-    haystacks.push(preview);
-  }
-  const combined = haystacks.filter(Boolean).join(' \n ').toLowerCase();
-  return combined.includes(normalizedQuery);
-}
-
-function renderList(container, items, archived){
+function renderList(container, items, archived, tokens){
   if(!container){
     return;
   }
@@ -84,12 +71,12 @@ function renderList(container, items, archived){
   }
   const fragment = document.createDocumentFragment();
   items.forEach(item => {
-    fragment.appendChild(createHistoryCard(item, archived));
+    fragment.appendChild(createHistoryCard(item, archived, tokens));
   });
   container.appendChild(fragment);
 }
 
-function createHistoryCard(item, archived){
+function createHistoryCard(item, archived, tokens){
   const card = document.createElement('article');
   card.className = 'history-item card';
   card.setAttribute('role', 'listitem');
@@ -100,7 +87,7 @@ function createHistoryCard(item, archived){
 
   const titleEl = document.createElement('h3');
   titleEl.className = 'history-item-title';
-  titleEl.textContent = item.title || 'Onbekend serienummer';
+  titleEl.innerHTML = highlightMatches(item.title || 'Onbekend serienummer', tokens);
   header.appendChild(titleEl);
 
   const metaEl = document.createElement('span');
@@ -112,16 +99,20 @@ function createHistoryCard(item, archived){
 
   const tags = document.createElement('div');
   tags.className = 'history-item-tags';
-  tags.appendChild(createBadge(`Urenstand: ${item.hours || '—'}`));
-  tags.appendChild(createBadge(`Berichten: ${item.messages?.length || 0}`));
-  tags.appendChild(createBadge(`Docs: ${item.docs?.length || 0}`));
+  tags.appendChild(createBadge(`Urenstand: ${item.hours || '—'}`, tokens));
+  const faultCodes = toDisplayFaultCodes(item.faultCodeList || item.faultCodes);
+  if(faultCodes){
+    tags.appendChild(createBadge(`Foutcodes: ${faultCodes}`, tokens));
+  }
+  tags.appendChild(createBadge(`Berichten: ${item.messages?.length || 0}`, tokens));
+  tags.appendChild(createBadge(`Docs: ${item.docs?.length || 0}`, tokens));
   card.appendChild(tags);
 
   const previewText = getPreview(item);
   if(previewText){
     const previewEl = document.createElement('p');
     previewEl.className = 'history-item-preview';
-    previewEl.textContent = previewText;
+    previewEl.innerHTML = highlightMatches(previewText, tokens);
     card.appendChild(previewEl);
   }
 
@@ -132,6 +123,8 @@ function createHistoryCard(item, archived){
   openBtn.type = 'button';
   openBtn.className = 'btn btn-primary btn-small';
   openBtn.textContent = 'Openen';
+  const chatLabel = (item.serialNumber || item.title || '').trim() || 'chat';
+  openBtn.setAttribute('aria-label', `Open chat ${chatLabel}`);
   openBtn.addEventListener('click', () => openChat(item));
   actions.appendChild(openBtn);
 
@@ -139,6 +132,7 @@ function createHistoryCard(item, archived){
   archiveBtn.type = 'button';
   archiveBtn.className = 'btn btn-ghost btn-small';
   archiveBtn.textContent = archived ? 'Terugzetten' : 'Archiveer';
+  archiveBtn.setAttribute('aria-label', archived ? `Zet chat ${chatLabel} terug naar actief` : `Archiveer chat ${chatLabel}`);
   archiveBtn.addEventListener('click', () => {
     setChatArchived(item.id, !archived);
     refreshHistory();
@@ -149,6 +143,7 @@ function createHistoryCard(item, archived){
   deleteBtn.type = 'button';
   deleteBtn.className = 'btn btn-accent btn-small history-delete';
   deleteBtn.textContent = 'Verwijderen';
+  deleteBtn.setAttribute('aria-label', `Verwijder chat ${chatLabel}`);
   deleteBtn.addEventListener('click', () => {
     const confirmDelete = window.confirm('Weet je zeker dat je deze chat permanent wilt verwijderen?');
     if(!confirmDelete){
@@ -164,10 +159,10 @@ function createHistoryCard(item, archived){
   return card;
 }
 
-function createBadge(text){
+function createBadge(text, tokens){
   const span = document.createElement('span');
   span.className = 'badge';
-  span.textContent = text;
+  span.innerHTML = highlightMatches(text, tokens);
   return span;
 }
 
@@ -202,7 +197,8 @@ function openChat(item){
   savePrechat({
     serialNumber: item.serialNumber || '',
     hours: item.hours || '',
-    faultCodes: item.faultCodes || ''
+    faultCodes: item.faultCodes || '',
+    faultCodeList: item.faultCodeList || []
   });
   markChatOpened(item.id);
   window.location.href = 'chat.html';
