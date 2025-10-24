@@ -172,6 +172,30 @@ textarea:disabled {
   font-weight: 500;
 }
 
+.badge[data-tone='muted'] {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: var(--text-dim);
+}
+
+.badge[data-tone='success'] {
+  background: rgba(72, 199, 142, 0.14);
+  border-color: rgba(72, 199, 142, 0.42);
+  color: rgba(201, 247, 222, 0.95);
+}
+
+.badge[data-tone='error'] {
+  background: rgba(219, 84, 97, 0.14);
+  border-color: rgba(219, 84, 97, 0.42);
+  color: rgba(255, 196, 204, 0.95);
+}
+
+.badge[data-tone='loading'] {
+  background: rgba(255, 197, 107, 0.14);
+  border-color: rgba(255, 197, 107, 0.42);
+  color: rgba(255, 229, 184, 0.95);
+}
+
 .chip {
   display: inline-flex;
   align-items: center;

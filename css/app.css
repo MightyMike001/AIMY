@@ -422,6 +422,21 @@ body.app-page .page-shell {
   padding-top: 6px;
 }
 
+.input-status {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+}
+
+.input-status .input {
+  flex: 1 1 auto;
+}
+
+.input-status .badge {
+  white-space: nowrap;
+}
+
 .settings-list {
   margin: 0;
   padding-left: 1.2rem;

@@ -11,6 +11,7 @@ export function getElements(){
     ingestBadge: $('#ingestStatus'),
     testBadge: $('#testBadge'),
     webhookInput: $('#webhookUrl'),
+    webhookStatus: $('#webhookStatus'),
     authInput: $('#authToken'),
     settingsBtn: $('#settingsBtn'),
     settingsModal: $('#settingsModal'),

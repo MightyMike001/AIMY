@@ -14,6 +14,89 @@ import { loadPrechat } from './prechat-storage.js';
 import { initViewportObserver } from './utils/viewport.js';
 import { normalizeWebhookUrl, sanitizeHeaderValue } from './utils/security.js';
 
+const WEBHOOK_PING_TIMEOUT_MS = 5000;
+const WEBHOOK_STATUS_STATES = {
+  empty: { tone: 'muted', text: 'Niet ingesteld' },
+  idle: { tone: 'muted', text: 'Nog niet getest' },
+  loading: { tone: 'loading', text: 'Verbinding testen…' },
+  success: { tone: 'success', text: 'Webhook OK' },
+  error: { tone: 'error', text: 'Onbereikbaar' },
+  invalid: { tone: 'error', text: 'Ongeldige URL' },
+  timeout: { tone: 'error', text: 'Onbereikbaar (timeout 5s)' }
+};
+
+export function validateUrl(value){
+  if(typeof value !== 'string'){
+    return false;
+  }
+  const trimmed = value.trim();
+  if(!trimmed){
+    return false;
+  }
+  try{
+    const url = new URL(trimmed);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  }catch{
+    return false;
+  }
+}
+
+export async function pingEndpoint(url, token, headerName = 'X-AIMY-Token'){
+  if(typeof url !== 'string' || !url.trim()){
+    return { ok: false };
+  }
+
+  let signal;
+  let controller = null;
+  let timeoutId = null;
+  if(typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function'){
+    signal = AbortSignal.timeout(WEBHOOK_PING_TIMEOUT_MS);
+  }else if(typeof AbortController !== 'undefined'){
+    controller = new AbortController();
+    signal = controller.signal;
+    timeoutId = window.setTimeout(() => controller.abort(), WEBHOOK_PING_TIMEOUT_MS);
+  }
+
+  const headers = { Accept: 'application/json' };
+  if(token){
+    headers[headerName] = token;
+  }
+
+  async function tryRequest(method){
+    try{
+      const response = await fetch(url, { method, headers, signal });
+      return response;
+    }catch(err){
+      if(err?.name === 'AbortError' || err?.name === 'TimeoutError'){
+        throw err;
+      }
+      return null;
+    }
+  }
+
+  try{
+    let response = await tryRequest('OPTIONS');
+    if(response && response.ok){
+      return { ok: true, status: response.status, method: 'OPTIONS' };
+    }
+    const needsGetFallback = !response || response.status === 405 || response.status >= 400;
+    if(needsGetFallback){
+      response = await tryRequest('GET');
+    }
+    if(response && response.ok){
+      return { ok: true, status: response.status, method: 'GET' };
+    }
+    return { ok: false, status: response ? response.status : null };
+  }catch(err){
+    const timeout = err?.name === 'AbortError' || err?.name === 'TimeoutError';
+    return { ok: false, timeout };
+  }finally{
+    if(timeoutId){
+      window.clearTimeout(timeoutId);
+    }
+  }
+}
+
 const config = loadConfig();
 const elements = getElements();
 const defaultPlaceholder = elements.inputEl ? elements.inputEl.getAttribute('placeholder') || '' : '';
@@ -22,6 +105,123 @@ const BANNER_FAULTS_EMPTY = 'Geen foutcodes opgegeven';
 
 let lastBannerText = '';
 let bannerAnimationTimer = null;
+let webhookPingSeq = 0;
+const webhookStatusEl = elements.webhookStatus;
+let lastPingSnapshot = {
+  url: config.N8N_WEBHOOK || '',
+  token: config.AUTH_VALUE || '',
+  status: config.N8N_WEBHOOK ? 'idle' : 'empty'
+};
+
+function renderWebhookStatus(state){
+  if(!webhookStatusEl){
+    return;
+  }
+  const status = WEBHOOK_STATUS_STATES[state] || WEBHOOK_STATUS_STATES.idle;
+  webhookStatusEl.textContent = status.text;
+  webhookStatusEl.dataset.tone = status.tone;
+}
+
+function handleWebhookInputEvent(){
+  if(!elements.webhookInput){
+    return;
+  }
+  const raw = elements.webhookInput.value.trim();
+  if(!raw){
+    renderWebhookStatus('empty');
+    return;
+  }
+  if(!validateUrl(raw)){
+    renderWebhookStatus('invalid');
+    return;
+  }
+  const normalized = normalizeWebhookUrl(raw);
+  if(!normalized){
+    renderWebhookStatus('invalid');
+    return;
+  }
+  if(lastPingSnapshot.url === normalized && lastPingSnapshot.status){
+    renderWebhookStatus(lastPingSnapshot.status);
+    return;
+  }
+  renderWebhookStatus('idle');
+}
+
+async function commitWebhookInput({ forcePing = false } = {}){
+  if(!elements.webhookInput){
+    return;
+  }
+  const raw = elements.webhookInput.value.trim();
+  if(!raw){
+    config.N8N_WEBHOOK = '';
+    lastPingSnapshot = { url: '', token: config.AUTH_VALUE || '', status: 'empty' };
+    persistConfig(config);
+    renderWebhookStatus('empty');
+    return;
+  }
+  if(!validateUrl(raw)){
+    config.N8N_WEBHOOK = '';
+    lastPingSnapshot = { url: '', token: config.AUTH_VALUE || '', status: 'invalid' };
+    persistConfig(config);
+    renderWebhookStatus('invalid');
+    return;
+  }
+  const normalized = normalizeWebhookUrl(raw);
+  if(!normalized){
+    config.N8N_WEBHOOK = '';
+    lastPingSnapshot = { url: '', token: config.AUTH_VALUE || '', status: 'invalid' };
+    persistConfig(config);
+    renderWebhookStatus('invalid');
+    return;
+  }
+  if(elements.webhookInput.value !== normalized){
+    elements.webhookInput.value = normalized;
+  }
+  if(config.N8N_WEBHOOK !== normalized){
+    config.N8N_WEBHOOK = normalized;
+    persistConfig(config);
+  }
+  const currentToken = config.AUTH_VALUE || '';
+  const previous = lastPingSnapshot;
+  let shouldPing = forcePing;
+  if(!shouldPing){
+    if(!previous.url){
+      shouldPing = true;
+    }else if(previous.url !== normalized || previous.token !== currentToken){
+      shouldPing = true;
+    }else if(previous.status !== 'success' && previous.status !== 'loading'){
+      shouldPing = true;
+    }
+  }
+  if(!shouldPing){
+    renderWebhookStatus(previous.status || 'success');
+    lastPingSnapshot = { ...previous, url: normalized, token: currentToken };
+    return;
+  }
+
+  const requestId = ++webhookPingSeq;
+  lastPingSnapshot = { url: normalized, token: currentToken, status: 'loading' };
+  renderWebhookStatus('loading');
+  let result;
+  try{
+    result = await pingEndpoint(normalized, currentToken, config.AUTH_HEADER);
+  }catch{
+    result = { ok: false };
+  }
+  if(requestId !== webhookPingSeq){
+    return;
+  }
+  if(result?.ok){
+    lastPingSnapshot = { url: normalized, token: currentToken, status: 'success' };
+    renderWebhookStatus('success');
+  }else if(result?.timeout){
+    lastPingSnapshot = { url: normalized, token: currentToken, status: 'timeout' };
+    renderWebhookStatus('timeout');
+  }else{
+    lastPingSnapshot = { url: normalized, token: currentToken, status: 'error' };
+    renderWebhookStatus('error');
+  }
+}
 
 initViewportObserver();
 
@@ -209,23 +409,45 @@ setupIngest({
   ingestBadge: elements.ingestBadge
 });
 
+if(webhookStatusEl){
+  renderWebhookStatus(lastPingSnapshot.status);
+}
+
 if(elements.webhookInput){
   elements.webhookInput.value = config.N8N_WEBHOOK;
-  elements.webhookInput.addEventListener('change', () => {
-    const normalized = normalizeWebhookUrl(elements.webhookInput.value);
-    config.N8N_WEBHOOK = normalized;
-    elements.webhookInput.value = normalized;
-    persistConfig(config);
-  });
+  handleWebhookInputEvent();
+  const commit = () => {
+    commitWebhookInput();
+  };
+  elements.webhookInput.addEventListener('input', handleWebhookInputEvent);
+  elements.webhookInput.addEventListener('change', commit);
+  elements.webhookInput.addEventListener('blur', commit);
 }
 
 if(elements.authInput){
   elements.authInput.value = config.AUTH_VALUE;
-  elements.authInput.addEventListener('change', () => {
+  const persistToken = () => {
     const sanitized = sanitizeHeaderValue(elements.authInput.value);
-    config.AUTH_VALUE = sanitized;
-    elements.authInput.value = sanitized;
+    if(elements.authInput.value !== sanitized){
+      elements.authInput.value = sanitized;
+    }
+    if(config.AUTH_VALUE !== sanitized){
+      config.AUTH_VALUE = sanitized;
+    }
     persistConfig(config);
+    if(elements.webhookInput && elements.webhookInput.value.trim()){
+      commitWebhookInput({ forcePing: true });
+    }else if(elements.webhookInput){
+      handleWebhookInputEvent();
+    }
+  };
+  elements.authInput.addEventListener('change', persistToken);
+  elements.authInput.addEventListener('blur', persistToken);
+}
+
+if(elements.webhookInput && config.N8N_WEBHOOK){
+  window.requestAnimationFrame(() => {
+    commitWebhookInput({ forcePing: true });
   });
 }
 

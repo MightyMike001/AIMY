@@ -126,7 +126,16 @@
           </div>
           <div class="settings-row grow">
             <label class="tiny" for="webhookUrl">Webhook</label>
-            <input id="webhookUrl" class="input" type="url" placeholder="https://…/aimy-chat" />
+            <div class="input-status">
+              <input
+                id="webhookUrl"
+                class="input"
+                type="url"
+                placeholder="https://…/aimy-chat"
+                aria-describedby="webhookStatus"
+              />
+              <span id="webhookStatus" class="badge" role="status" aria-live="polite">Niet ingesteld</span>
+            </div>
           </div>
           <div class="settings-row grow">
             <label class="tiny" for="authToken">API-token</label>
