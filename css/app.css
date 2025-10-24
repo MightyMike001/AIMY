@@ -1,13 +1,18 @@
 body.app-page,
 body.chat-page,
 body.history-page {
-  padding: calc(env(safe-area-inset-top, 0px) + var(--s-8)) 0 var(--s-8);
+  padding: 0;
+  overflow: hidden;
 }
 
 body.app-page .page-shell,
 body.chat-page .page-shell,
 body.history-page .page-shell {
   gap: var(--s-8);
+}
+
+body.app-page .page-shell {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--s-8) + var(--s-6));
 }
 
 .site-header {
@@ -69,17 +74,24 @@ body.history-page .page-shell {
   max-width: var(--max-width);
   margin: 0 auto;
   padding: 0 var(--s-4);
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   gap: var(--s-6);
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
 }
 
 @media (min-width: 960px) {
   .app-main.two-column {
-    display: grid;
     grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
-    align-items: start;
+    grid-template-rows: minmax(0, 1fr);
+    align-items: stretch;
   }
+}
+
+.app-main.two-column > * {
+  min-height: 0;
 }
 
 .summary-list {
@@ -122,7 +134,7 @@ body.history-page .page-shell {
   display: flex;
   flex-direction: column;
   gap: var(--s-4);
-  min-height: 60vh;
+  min-height: 0;
 }
 
 .chat-toolbar {
@@ -151,6 +163,7 @@ body.history-page .page-shell {
   gap: var(--s-4);
   overflow-y: auto;
   padding-right: var(--s-1);
+  min-height: 0;
 }
 
 .bubble {
@@ -401,11 +414,14 @@ body.history-page .page-shell {
 }
 
 .quick-actions {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--s-6));
   display: flex;
   flex-wrap: wrap;
   gap: var(--s-3);
   justify-content: center;
-  margin-top: var(--s-6);
   padding: 0 var(--s-4);
 }
 
