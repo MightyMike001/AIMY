@@ -449,6 +449,29 @@ body.app-page .page-shell {
   font-size: var(--fs-2);
 }
 
+.settings-save-indicator {
+  position: absolute;
+  top: var(--s-4);
+  right: var(--s-4);
+  padding: 4px 10px;
+  border-radius: var(--r-sm);
+  background: rgba(64, 145, 255, 0.2);
+  color: var(--text);
+  font-size: var(--fs-2);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  box-shadow: 0 0 0 1px rgba(64, 145, 255, 0.25);
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+}
+
+.settings-save-indicator.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 .prechat-card {
   position: relative;
   display: flex;
