@@ -1,4 +1,5 @@
 import { fmtBytes } from './utils/format.js';
+import { safeRandomId } from './utils/random.js';
 
 const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25 MB
 const ALLOWED_EXTENSIONS = new Set(['pdf', 'txt', 'doc', 'docx', 'md', 'html', 'json', 'csv']);
@@ -27,7 +28,7 @@ function normalizeDocId(value){
   if(typeof value === 'string' && value.trim()){
     return value.trim();
   }
-  return crypto.randomUUID();
+  return safeRandomId('doc');
 }
 
 function createDocElement(doc, state, render){
@@ -115,7 +116,7 @@ async function uploadDoc(state, file){
   const form = new FormData();
   form.append('file', file);
   const doc = {
-    id: crypto.randomUUID(),
+    id: safeRandomId('doc'),
     name: sanitizeFileName(file.name),
     size: file.size,
     uploadedAt: Date.now()
