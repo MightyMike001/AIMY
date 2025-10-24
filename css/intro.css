@@ -1,7 +1,7 @@
 body.intro-page {
-  align-items: center;
-  justify-content: center;
-  padding: var(--s-8) var(--s-4);
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 0;
 }
 
 .intro-shell {
@@ -57,7 +57,7 @@ body.intro-page {
   transform: translate3d(0, 0, 0) scale(1);
 }
 
-.intro-logo-video {
+#aimy-hero .intro-logo-video {
   position: absolute;
   top: 0;
   right: 0;

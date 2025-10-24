@@ -142,14 +142,14 @@ textarea {
 }
 
 #aimy-bg {
-  position: fixed;
+  position: absolute;
   inset: 0;
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
   background: transparent;
-  width: 100vw;
-  height: 100dvh;
+  width: 100%;
+  height: 100%;
 }
 
 #aimy-bg::before,
@@ -283,4 +283,53 @@ textarea {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Pagina vult viewport en vormt eigen stacking context */
+#aimy-page {
+  min-height: 100svh;
+  min-height: -webkit-fill-available;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+/* Hero gecentreerd in beide assen */
+#aimy-hero {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  text-align: center;
+  position: relative;
+  z-index: 2;
+}
+
+/* Optioneel: contentbreedte */
+#aimy-hero > .container,
+#aimy-hero > .card,
+#aimy-hero > .aimy-card {
+  max-width: 960px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* Canvas-achtergrond: volle dekking achter content */
+#aimy-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+#aimy-protons {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Content altijd boven canvas */
+#aimy-hero > * {
+  position: relative;
+  z-index: 2;
 }
