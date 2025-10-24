@@ -13,7 +13,19 @@ export function initAtomField({
   activationClass = 'is-active'
 } = {}){
   const canvasEl = typeof canvas === 'string' ? document.querySelector(canvas) : canvas;
-  const ctx = canvasEl?.getContext('2d', { alpha: true, desynchronized: true });
+  let ctx = null;
+
+  if(canvasEl){
+    try{
+      ctx = canvasEl.getContext('2d', { alpha: true, desynchronized: true });
+    }catch{
+      ctx = null;
+    }
+
+    if(!ctx){
+      ctx = canvasEl.getContext('2d');
+    }
+  }
 
   if(!canvasEl || !ctx){
     return {
