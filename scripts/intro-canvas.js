@@ -1,7 +1,7 @@
 import { createBackground } from '../js/bg-canvas.js';
 
 createBackground({
-  canvas: '#proton-field',
+  canvas: '#aimy-protons',
   logo: '.intro-logo'
 });
 

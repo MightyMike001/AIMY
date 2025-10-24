@@ -21,39 +21,41 @@
   <link rel="stylesheet" href="css/intro.css" />
 </head>
 <body class="intro-page" data-theme="dark">
-  <div class="bg-scene" aria-hidden="true">
-    <canvas id="proton-field" aria-hidden="true"></canvas>
-  </div>
-
-  <main class="intro-shell" role="main">
-    <h1>AIMY</h1>
-    <p class="visually-hidden">Digitale assistent voor een vliegende start.</p>
-    <div
-      class="intro-logo-wrapper"
-      role="button"
-      tabindex="0"
-      aria-label="Speel AIMY-animatie"
-    >
-      <img
-        src="assets/DACCFAD1-BABC-4760-9110-77A1D5D402D2.png"
-        alt="AIMY-logo"
-        width="1024"
-        height="1024"
-        class="intro-logo"
-        decoding="async"
-        fetchpriority="high"
-      />
-      <video
-        class="intro-logo-video"
-        src="assets/1C2DBBEE-AF4B-4EAE-8DD3-AEBE06E39271-video.mp4"
-        preload="auto"
-        muted
-        playsinline
-        aria-hidden="true"
-      ></video>
+  <div id="aimy-page">
+    <div id="aimy-bg" aria-hidden="true">
+      <canvas id="aimy-protons" aria-hidden="true"></canvas>
     </div>
-    <a class="intro-cta" href="prechat.html">Open de app</a>
-  </main>
+
+    <main class="intro-shell" role="main">
+      <h1>AIMY</h1>
+      <p class="visually-hidden">Digitale assistent voor een vliegende start.</p>
+      <div
+        class="intro-logo-wrapper"
+        role="button"
+        tabindex="0"
+        aria-label="Speel AIMY-animatie"
+      >
+        <img
+          src="assets/DACCFAD1-BABC-4760-9110-77A1D5D402D2.png"
+          alt="AIMY-logo"
+          width="1024"
+          height="1024"
+          class="intro-logo"
+          decoding="async"
+          fetchpriority="high"
+        />
+        <video
+          class="intro-logo-video"
+          src="assets/1C2DBBEE-AF4B-4EAE-8DD3-AEBE06E39271-video.mp4"
+          preload="auto"
+          muted
+          playsinline
+          aria-hidden="true"
+        ></video>
+      </div>
+      <a class="intro-cta" href="prechat.html">Open de app</a>
+    </main>
+  </div>
 
   <script type="module" src="scripts/intro-canvas.js"></script>
 </body>

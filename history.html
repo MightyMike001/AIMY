@@ -16,69 +16,70 @@
   <link rel="stylesheet" href="css/history.css" />
 </head>
 <body class="history-page" data-theme="dark">
-  <div class="bg-scene" aria-hidden="true">
-    <canvas id="proton-field" aria-hidden="true"></canvas>
-  </div>
+  <div id="aimy-page">
+    <div id="aimy-bg" aria-hidden="true">
+      <canvas id="aimy-protons" aria-hidden="true"></canvas>
+    </div>
 
-  <div class="page-shell">
-    <header class="site-header" role="banner">
-      <div class="app-header card glass">
-        <div class="app-brand">
-          <img
-            src="assets/DACCFAD1-BABC-4760-9110-77A1D5D402D2.png"
-            alt="AIMY-logo"
-            width="72"
-            height="72"
-            class="app-mark"
-            decoding="async"
-            fetchpriority="high"
-          />
-          <div class="app-copy">
-            <p class="app-eyebrow">Overzicht</p>
-            <h1 class="app-title">AIMY – Chatgeschiedenis</h1>
-            <p class="tiny">Bewaar, zoek, open en archiveer eerdere gesprekken.</p>
+    <div class="page-shell">
+      <header class="site-header" role="banner">
+        <div class="app-header card glass">
+          <div class="app-brand">
+            <img
+              src="assets/DACCFAD1-BABC-4760-9110-77A1D5D402D2.png"
+              alt="AIMY-logo"
+              width="72"
+              height="72"
+              class="app-mark"
+              decoding="async"
+              fetchpriority="high"
+            />
+            <div class="app-copy">
+              <p class="app-eyebrow">Overzicht</p>
+              <h1 class="app-title">AIMY – Chatgeschiedenis</h1>
+              <p class="tiny">Bewaar, zoek, open en archiveer eerdere gesprekken.</p>
+            </div>
           </div>
+          <nav class="app-actions" aria-label="Navigatie">
+            <a class="btn btn-ghost btn-small" href="prechat.html">Nieuwe werkbon</a>
+            <a class="btn btn-ghost btn-small" href="chat.html">Ga naar chat</a>
+          </nav>
         </div>
-        <nav class="app-actions" aria-label="Navigatie">
-          <a class="btn btn-ghost btn-small" href="prechat.html">Nieuwe werkbon</a>
-          <a class="btn btn-ghost btn-small" href="chat.html">Ga naar chat</a>
-        </nav>
-      </div>
-    </header>
+      </header>
 
-    <main class="history-layout" role="main">
-      <section class="card history-controls" aria-label="Zoek en filter">
-        <div class="history-controls-header">
-          <h2>Je opgeslagen chats</h2>
-          <p class="hint">Titels gebruiken altijd het serienummer en – indien aanwezig – foutcodes. Gebruik de zoekbalk om snel een chat te vinden.</p>
-        </div>
-        <div class="history-search">
-          <label class="sr-only" for="historySearch">Zoek op serienummer of foutcode</label>
-          <input id="historySearch" class="input" type="search" placeholder="Zoek op serienummer, foutcode of notities" autocomplete="off" />
-        </div>
-      </section>
-
-      <section class="history-columns" aria-label="Overzicht van chats">
-        <article class="card history-section" aria-labelledby="activeChats">
-          <div class="history-section-header">
-            <h3 id="activeChats">Actieve chats</h3>
-            <span id="historyActiveCount" class="tiny"></span>
+      <main class="history-layout" role="main">
+        <section class="card history-controls" aria-label="Zoek en filter">
+          <div class="history-controls-header">
+            <h2>Je opgeslagen chats</h2>
+            <p class="hint">Titels gebruiken altijd het serienummer en – indien aanwezig – foutcodes. Gebruik de zoekbalk om snel een chat te vinden.</p>
           </div>
-          <div id="historyActiveList" class="history-list" role="list"></div>
-          <p id="historyEmptyActive" class="history-empty hint">Nog geen actieve chats opgeslagen.</p>
-        </article>
-
-        <article class="card history-section" aria-labelledby="archivedChats">
-          <div class="history-section-header">
-            <h3 id="archivedChats">Gearchiveerde chats</h3>
-            <span id="historyArchivedCount" class="tiny"></span>
+          <div class="history-search">
+            <label class="sr-only" for="historySearch">Zoek op serienummer of foutcode</label>
+            <input id="historySearch" class="input" type="search" placeholder="Zoek op serienummer, foutcode of notities" autocomplete="off" />
           </div>
-          <div id="historyArchivedList" class="history-list" role="list"></div>
-          <p id="historyEmptyArchived" class="history-empty hint">Geen gearchiveerde chats gevonden.</p>
-        </article>
-      </section>
-    </main>
-  </div>
+        </section>
+
+        <section class="history-columns" aria-label="Overzicht van chats">
+          <article class="card history-section" aria-labelledby="activeChats">
+            <div class="history-section-header">
+              <h3 id="activeChats">Actieve chats</h3>
+              <span id="historyActiveCount" class="tiny"></span>
+            </div>
+            <div id="historyActiveList" class="history-list" role="list"></div>
+            <p id="historyEmptyActive" class="history-empty hint">Nog geen actieve chats opgeslagen.</p>
+          </article>
+
+          <article class="card history-section" aria-labelledby="archivedChats">
+            <div class="history-section-header">
+              <h3 id="archivedChats">Gearchiveerde chats</h3>
+              <span id="historyArchivedCount" class="tiny"></span>
+            </div>
+            <div id="historyArchivedList" class="history-list" role="list"></div>
+            <p id="historyEmptyArchived" class="history-empty hint">Geen gearchiveerde chats gevonden.</p>
+          </article>
+        </section>
+      </main>
+    </div>
 
   <script type="module" src="scripts/history-page.js"></script>
 </body>

@@ -1,19 +1,17 @@
-.glass {
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass);
-  -webkit-backdrop-filter: var(--glass);
+.glass,
+.card,
+.panel,
+.sheet,
+.form-card {
+  background: rgba(20, 22, 26, 0.55);
+  backdrop-filter: blur(10px) saturate(115%);
+  -webkit-backdrop-filter: blur(10px) saturate(115%);
   border-radius: var(--r-md);
-  border: 1px solid var(--glass-stroke);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: var(--ring);
 }
 
 .card {
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass);
-  -webkit-backdrop-filter: var(--glass);
-  border-radius: var(--r-md);
-  border: 1px solid var(--glass-stroke);
-  box-shadow: var(--ring);
   padding: var(--s-6);
 }
 
@@ -89,7 +87,7 @@ textarea {
   padding: 10px 12px;
   border-radius: var(--r-sm);
   border: 1px solid var(--glass-stroke);
-  background: rgba(255, 255, 255, 0.04);
+  background-color: rgba(10, 12, 15, 0.65);
   color: var(--text);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
