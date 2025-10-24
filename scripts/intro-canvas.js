@@ -11,33 +11,36 @@ const logoVideo = logoWrapper?.querySelector('.intro-logo-video');
 if(logoWrapper && logoVideo){
   let isAttemptingPlayback = false;
 
-  function handleVideoEnd(){
-    resetPlayback();
+  function showVideo(){
+    if(!logoWrapper.classList.contains('is-playing')){
+      logoWrapper.classList.add('is-playing');
+    }
   }
 
-  function handleVideoPlaying(){
-    logoWrapper.classList.add('is-playing');
+  function hideVideo(){
+    logoWrapper.classList.remove('is-playing');
+    logoVideo.pause();
+    if(logoVideo.currentTime !== 0){
+      logoVideo.currentTime = 0;
+    }
+  }
+
+  function handleVideoEnd(){
+    isAttemptingPlayback = false;
+    hideVideo();
   }
 
   function resetPlayback(){
     isAttemptingPlayback = false;
-    logoWrapper.classList.remove('is-playing');
-    logoVideo.pause();
-    logoVideo.currentTime = 0;
+    hideVideo();
     logoVideo.removeEventListener('ended', handleVideoEnd);
-    logoVideo.removeEventListener('playing', handleVideoPlaying);
+    logoVideo.removeEventListener('playing', showVideo);
   }
 
   function startPlayback(){
     if(isAttemptingPlayback){
       if(logoWrapper.classList.contains('is-playing')){
         logoVideo.currentTime = 0;
-        const restartPromise = logoVideo.play();
-        if(typeof restartPromise?.catch === 'function'){
-          restartPromise.catch(() => {
-            resetPlayback();
-          });
-        }
       }
       return;
     }
@@ -48,25 +51,24 @@ if(logoWrapper && logoVideo){
     logoVideo.currentTime = 0;
 
     logoVideo.removeEventListener('ended', handleVideoEnd);
-    logoVideo.removeEventListener('playing', handleVideoPlaying);
-    logoVideo.addEventListener('ended', handleVideoEnd);
-    logoVideo.addEventListener('playing', handleVideoPlaying);
+    logoVideo.removeEventListener('playing', showVideo);
+    logoVideo.addEventListener('ended', handleVideoEnd, { once: true });
+    logoVideo.addEventListener('playing', showVideo, { once: true });
 
     const playPromise = logoVideo.play();
-    if(typeof playPromise?.catch === 'function'){
-      playPromise.catch(() => {
-        resetPlayback();
-      });
-    }
-
-    if(typeof playPromise?.then === 'function'){
-      playPromise.then(() => {
-        if(!logoWrapper.classList.contains('is-playing')){
-          logoWrapper.classList.add('is-playing');
-        }
-      }).catch(() => {
-        // Swallow the rejection because the catch above handles it.
-      });
+    if(playPromise && typeof playPromise.then === 'function'){
+      playPromise
+        .then(() => {
+          if(logoVideo.paused){
+            resetPlayback();
+          }
+        })
+        .catch(() => {
+          resetPlayback();
+        });
+    } else {
+      // If play() does not return a promise, optimistically show the video.
+      showVideo();
     }
   }
 
@@ -78,7 +80,6 @@ if(logoWrapper && logoVideo){
   }
 
   logoWrapper.addEventListener('click', startPlayback);
-  logoWrapper.addEventListener('pointerdown', startPlayback, { passive: true });
   logoWrapper.addEventListener('keydown', handleKeydown);
   logoVideo.addEventListener('error', resetPlayback);
   document.addEventListener('visibilitychange', () => {
