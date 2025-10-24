@@ -10,19 +10,41 @@ const logoVideo = logoWrapper?.querySelector('.intro-logo-video');
 
 if(logoWrapper && logoVideo){
   let isAttemptingPlayback = false;
+  let hideDelayHandle = null;
 
   function showVideo(){
+    if(hideDelayHandle !== null){
+      window.clearTimeout(hideDelayHandle);
+      hideDelayHandle = null;
+    }
+
     if(!logoWrapper.classList.contains('is-playing')){
       logoWrapper.classList.add('is-playing');
     }
   }
 
-  function hideVideo(){
-    logoWrapper.classList.remove('is-playing');
+  function stopVideoPlayback(){
     logoVideo.pause();
     if(logoVideo.currentTime !== 0){
       logoVideo.currentTime = 0;
     }
+  }
+
+  function hideVideo({ immediate = false } = {}){
+    const performHide = () => {
+      logoWrapper.classList.remove('is-playing');
+      stopVideoPlayback();
+    };
+
+    if(immediate){
+      performHide();
+      return;
+    }
+
+    hideDelayHandle = window.setTimeout(() => {
+      hideDelayHandle = null;
+      performHide();
+    }, 120);
   }
 
   function handleVideoEnd(){
@@ -32,7 +54,7 @@ if(logoWrapper && logoVideo){
 
   function resetPlayback(){
     isAttemptingPlayback = false;
-    hideVideo();
+    hideVideo({ immediate: true });
     logoVideo.removeEventListener('ended', handleVideoEnd);
     logoVideo.removeEventListener('playing', showVideo);
   }
@@ -54,6 +76,9 @@ if(logoWrapper && logoVideo){
     logoVideo.removeEventListener('playing', showVideo);
     logoVideo.addEventListener('ended', handleVideoEnd, { once: true });
     logoVideo.addEventListener('playing', showVideo, { once: true });
+
+    // Fade in the video immediately to create a subtle transition.
+    requestAnimationFrame(showVideo);
 
     const playPromise = logoVideo.play();
     if(playPromise && typeof playPromise.then === 'function'){
