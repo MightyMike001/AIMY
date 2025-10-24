@@ -2,99 +2,100 @@ import { createBackground } from '../js/bg-canvas.js';
 
 createBackground({
   canvas: '#aimy-protons',
-  logo: '.intro-logo'
+  logo: '#heroImage'
 });
 
-const logoWrapper = document.querySelector('.intro-logo-wrapper');
-const logoVideo = logoWrapper?.querySelector('.intro-logo-video');
+const hero = document.querySelector('.intro-hero');
+const heroVideo = document.getElementById('heroVideo');
 
-if(logoWrapper && logoVideo){
-  let isAttemptingPlayback = false;
-  let hideDelayHandle = null;
+if(hero && heroVideo){
+  let isPlaying = false;
+  let canPlayHandler = null;
 
-  function showVideo(){
-    if(hideDelayHandle !== null){
-      window.clearTimeout(hideDelayHandle);
-      hideDelayHandle = null;
-    }
+  function deactivateHero(){
+    hero.classList.remove('is-playing');
+  }
 
-    if(!logoWrapper.classList.contains('is-playing')){
-      logoWrapper.classList.add('is-playing');
+  function clearCanPlayHandler(){
+    if(canPlayHandler){
+      heroVideo.removeEventListener('canplay', canPlayHandler);
+      canPlayHandler = null;
     }
   }
 
-  function stopVideoPlayback(){
-    logoVideo.pause();
-    if(logoVideo.currentTime !== 0){
-      logoVideo.currentTime = 0;
+  function resetVideoState(){
+    deactivateHero();
+    heroVideo.pause();
+    if(heroVideo.currentTime !== 0){
+      heroVideo.currentTime = 0;
+    }
+    heroVideo.removeEventListener('ended', handleVideoEnded);
+    clearCanPlayHandler();
+    isPlaying = false;
+  }
+
+  function handleVideoEnded(){
+    resetVideoState();
+  }
+
+  function attemptPlayback(){
+    const playAttempt = heroVideo.play();
+    if(playAttempt && typeof playAttempt.then === 'function'){
+      playAttempt
+        .then(() => {
+          if(heroVideo.paused){
+            resetVideoState();
+            return;
+          }
+          hero.classList.add('is-playing');
+        })
+        .catch(() => {
+          resetVideoState();
+        });
+    } else {
+      if(heroVideo.paused){
+        resetVideoState();
+        return;
+      }
+      hero.classList.add('is-playing');
     }
   }
 
-  function hideVideo({ immediate = false } = {}){
-    const performHide = () => {
-      logoWrapper.classList.remove('is-playing');
-      stopVideoPlayback();
+  function preparePlayback(){
+    clearCanPlayHandler();
+
+    const handler = () => {
+      heroVideo.removeEventListener('canplay', handler);
+      if(canPlayHandler === handler){
+        canPlayHandler = null;
+      }
+      attemptPlayback();
     };
 
-    if(immediate){
-      performHide();
-      return;
+    canPlayHandler = handler;
+    heroVideo.addEventListener('canplay', handler, { once: true });
+
+    if(heroVideo.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA){
+      requestAnimationFrame(handler);
+    } else {
+      heroVideo.load();
     }
-
-    hideDelayHandle = window.setTimeout(() => {
-      hideDelayHandle = null;
-      performHide();
-    }, 120);
-  }
-
-  function handleVideoEnd(){
-    isAttemptingPlayback = false;
-    hideVideo();
-  }
-
-  function resetPlayback(){
-    isAttemptingPlayback = false;
-    hideVideo({ immediate: true });
-    logoVideo.removeEventListener('ended', handleVideoEnd);
-    logoVideo.removeEventListener('playing', showVideo);
   }
 
   function startPlayback(){
-    if(isAttemptingPlayback){
-      if(logoWrapper.classList.contains('is-playing')){
-        logoVideo.currentTime = 0;
-      }
+    if(isPlaying){
       return;
     }
 
-    isAttemptingPlayback = true;
-    logoVideo.muted = true;
-    logoVideo.playsInline = true;
-    logoVideo.currentTime = 0;
+    isPlaying = true;
+    heroVideo.currentTime = 0;
+    heroVideo.muted = true;
+    heroVideo.playsInline = true;
 
-    logoVideo.removeEventListener('ended', handleVideoEnd);
-    logoVideo.removeEventListener('playing', showVideo);
-    logoVideo.addEventListener('ended', handleVideoEnd, { once: true });
-    logoVideo.addEventListener('playing', showVideo, { once: true });
+    heroVideo.removeEventListener('ended', handleVideoEnded);
+    heroVideo.addEventListener('ended', handleVideoEnded, { once: true });
 
-    // Fade in the video immediately to create a subtle transition.
-    requestAnimationFrame(showVideo);
-
-    const playPromise = logoVideo.play();
-    if(playPromise && typeof playPromise.then === 'function'){
-      playPromise
-        .then(() => {
-          if(logoVideo.paused){
-            resetPlayback();
-          }
-        })
-        .catch(() => {
-          resetPlayback();
-        });
-    } else {
-      // If play() does not return a promise, optimistically show the video.
-      showVideo();
-    }
+    preparePlayback();
   }
 
   function handleKeydown(event){
@@ -104,12 +105,16 @@ if(logoWrapper && logoVideo){
     }
   }
 
-  logoWrapper.addEventListener('click', startPlayback);
-  logoWrapper.addEventListener('keydown', handleKeydown);
-  logoVideo.addEventListener('error', resetPlayback);
+  function handleVideoError(){
+    resetVideoState();
+  }
+
+  hero.addEventListener('click', startPlayback);
+  hero.addEventListener('keydown', handleKeydown);
+  heroVideo.addEventListener('error', handleVideoError);
   document.addEventListener('visibilitychange', () => {
     if(document.hidden){
-      resetPlayback();
+      resetVideoState();
     }
   });
 }
