@@ -26,7 +26,7 @@ body.intro-page #aimy-page {
   color: var(--text-dim);
 }
 
-.intro-logo-wrapper {
+.intro-hero {
   position: relative;
   display: grid;
   place-items: center;
@@ -40,12 +40,12 @@ body.intro-page #aimy-page {
   cursor: pointer;
 }
 
-.intro-logo-wrapper:focus-visible {
+.intro-hero:focus-visible {
   outline: 2px solid rgba(114, 163, 255, 0.92);
   outline-offset: 6px;
 }
 
-.intro-logo {
+.intro-hero-image {
   display: block;
   width: 100%;
   height: 100%;
@@ -53,11 +53,13 @@ body.intro-page #aimy-page {
   border-radius: inherit;
   opacity: 0;
   transform: translate3d(0, 18px, 0) scale(0.97);
-  transition: transform 0.56s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 0.32s ease;
+  transition:
+    transform 0.56s cubic-bezier(0.22, 0.61, 0.36, 1),
+    opacity 0.3s ease;
 }
 
-.intro-logo,
-.intro-logo-video {
+.intro-hero-image,
+.intro-hero-video {
   grid-area: 1 / 1;
 }
 
@@ -66,7 +68,7 @@ body.intro-page #aimy-page {
   transform: translate3d(0, 0, 0) scale(1);
 }
 
-#aimy-hero .intro-logo-video {
+.intro-hero-video {
   position: absolute;
   top: 0;
   right: 0;
@@ -77,15 +79,15 @@ body.intro-page #aimy-page {
   border-radius: inherit;
   object-fit: cover;
   opacity: 0;
-  transition: opacity 0.32s ease;
+  transition: opacity 0.3s ease;
   pointer-events: none;
 }
 
-.intro-logo-wrapper.is-playing .intro-logo-video {
+.intro-hero.is-playing .intro-hero-video {
   opacity: 1;
 }
 
-.intro-logo-wrapper.is-playing .intro-logo {
+.intro-hero.is-playing .intro-hero-image {
   opacity: 0;
 }
 
@@ -119,7 +121,7 @@ body.intro-page #aimy-page {
     transform: none;
   }
 
-  .intro-logo-video {
+  .intro-hero-video {
     transition: none;
   }
 }
