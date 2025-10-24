@@ -22,11 +22,8 @@ const BANNER_FAULTS_EMPTY = 'Geen foutcodes opgegeven';
 
 let lastBannerText = '';
 let bannerAnimationTimer = null;
-let summaryObserver = null;
 
 initViewportObserver();
-
-setupBannerObservers();
 
 applyComposerAvailability(false);
 hydratePrechatState();
@@ -69,17 +66,6 @@ function renderPrechatSummary(){
     hours: '',
     faultCodes: ''
   };
-  if(elements.summarySerial){
-    elements.summarySerial.textContent = prechat.serialNumber || '—';
-  }
-  if(elements.summaryHours){
-    elements.summaryHours.textContent = prechat.hours || '—';
-  }
-  if(elements.summaryFaults){
-    const hasFaults = Boolean(prechat.faultCodes);
-    elements.summaryFaults.textContent = hasFaults ? prechat.faultCodes : 'Geen foutcodes opgegeven';
-    elements.summaryFaults.classList.toggle('empty', !hasFaults);
-  }
   updateBannerInfo(prechat);
 }
 
@@ -138,35 +124,6 @@ function sanitizeFaultValue(value){
     return '';
   }
   return cleaned.toLowerCase() === BANNER_FAULTS_EMPTY.toLowerCase() ? '' : cleaned;
-}
-
-function updateBannerFromElements(){
-  updateBannerInfo({
-    serialNumber: elements.summarySerial ? elements.summarySerial.textContent || '' : '',
-    hours: elements.summaryHours ? elements.summaryHours.textContent || '' : '',
-    faultCodes: elements.summaryFaults ? elements.summaryFaults.textContent || '' : ''
-  });
-}
-
-function setupBannerObservers(){
-  if(summaryObserver || !elements.bannerInfo){
-    return;
-  }
-  const targets = [elements.summarySerial, elements.summaryHours, elements.summaryFaults].filter(Boolean);
-  if(!targets.length){
-    return;
-  }
-  summaryObserver = new MutationObserver(() => {
-    updateBannerFromElements();
-  });
-  targets.forEach((target) => {
-    summaryObserver.observe(target, {
-      characterData: true,
-      childList: true,
-      subtree: true
-    });
-  });
-  updateBannerFromElements();
 }
 
 function sharePrechatIntro(){
@@ -299,13 +256,6 @@ if(elements.newChatBtn){
         sharePrechatIntro();
       });
     }
-  });
-}
-
-if(elements.editPrechatBtn){
-  elements.editPrechatBtn.addEventListener('click', () => {
-    updateBannerInfo(state.prechat);
-    window.location.href = 'prechat.html';
   });
 }
 
