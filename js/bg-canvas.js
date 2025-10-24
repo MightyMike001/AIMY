@@ -1,7 +1,7 @@
 import initProtonField from '../scripts/proton-field.js';
 
 export function createBackground({
-  canvas = '#proton-field',
+  canvas = '#aimy-protons',
   overlay = '[data-bg-overlay]',
   logo = '[data-bg-logo]',
   activationClass = 'is-active'

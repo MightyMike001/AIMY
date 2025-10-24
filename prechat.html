@@ -29,121 +29,123 @@
   <link rel="stylesheet" href="css/app.css" />
 </head>
 <body class="app-page" data-theme="dark">
-  <div class="bg-scene" aria-hidden="true">
-    <canvas id="proton-field" aria-hidden="true"></canvas>
-  </div>
+  <div id="aimy-page">
+    <div id="aimy-bg" aria-hidden="true">
+      <canvas id="aimy-protons" aria-hidden="true"></canvas>
+    </div>
 
-  <div class="page-shell">
-    <header class="site-header" role="banner">
-      <div class="app-header card glass">
-        <div class="app-brand">
-          <img
-            src="assets/DACCFAD1-BABC-4760-9110-77A1D5D402D2.png"
-            alt="AIMY-logo"
-            width="72"
-            height="72"
-            class="app-mark"
-            decoding="async"
-            fetchpriority="high"
-          />
-          <div class="app-copy">
-            <p class="app-eyebrow">Stap 1</p>
-            <h1 class="app-title">Werkbon voorbereiden</h1>
+    <div class="page-shell">
+      <header class="site-header" role="banner">
+        <div class="app-header card glass">
+          <div class="app-brand">
+            <img
+              src="assets/DACCFAD1-BABC-4760-9110-77A1D5D402D2.png"
+              alt="AIMY-logo"
+              width="72"
+              height="72"
+              class="app-mark"
+              decoding="async"
+              fetchpriority="high"
+            />
+            <div class="app-copy">
+              <p class="app-eyebrow">Stap 1</p>
+              <h1 class="app-title">Werkbon voorbereiden</h1>
+            </div>
           </div>
+          <nav class="app-actions" aria-label="Snelle links">
+            <a class="btn btn-ghost btn-small" href="history.html">Chatgeschiedenis</a>
+            <a class="btn btn-ghost btn-small" href="chat.html">Ga naar chat</a>
+          </nav>
         </div>
-        <nav class="app-actions" aria-label="Snelle links">
-          <a class="btn btn-ghost btn-small" href="history.html">Chatgeschiedenis</a>
-          <a class="btn btn-ghost btn-small" href="chat.html">Ga naar chat</a>
-        </nav>
-      </div>
-    </header>
+      </header>
 
-    <main class="app-main" role="main">
-      <article class="card prechat-card" aria-labelledby="prechatHeading">
-        <header class="prechat-header">
-          <div class="prechat-logo" aria-hidden="true">
-            <img src="assets/DACCFAD1-BABC-4760-9110-77A1D5D402D2.png" alt="" width="48" height="48" />
-          </div>
-          <div class="stack-sm">
-            <h2 id="prechatHeading">Vul je werkbongegevens in</h2>
-            <p class="hint">We bewaren alles lokaal en gebruiken het alleen wanneer je AIMY start.</p>
-          </div>
-        </header>
+      <main class="app-main" role="main">
+        <article class="card prechat-card" aria-labelledby="prechatHeading">
+          <header class="prechat-header">
+            <div class="prechat-logo" aria-hidden="true">
+              <img src="assets/DACCFAD1-BABC-4760-9110-77A1D5D402D2.png" alt="" width="48" height="48" />
+            </div>
+            <div class="stack-sm">
+              <h2 id="prechatHeading">Vul je werkbongegevens in</h2>
+              <p class="hint">We bewaren alles lokaal en gebruiken het alleen wanneer je AIMY start.</p>
+            </div>
+          </header>
 
-        <form id="precheckForm" class="stack" novalidate>
-          <div class="field">
-            <label for="serialNumber">Serienummer <span class="visually-hidden">(verplicht)</span></label>
-            <input
-              id="serialNumber"
-              class="input"
-              name="serialNumber"
-              type="text"
-              inputmode="text"
-              autocomplete="off"
-              spellcheck="false"
-              required
-              minlength="5"
-              maxlength="20"
-              placeholder="Bijvoorbeeld H2X394N01234"
-            />
-            <p id="serialNumberError" class="error" role="alert"></p>
-          </div>
+          <form id="precheckForm" class="stack" novalidate>
+            <div class="field">
+              <label for="serialNumber">Serienummer <span class="visually-hidden">(verplicht)</span></label>
+              <input
+                id="serialNumber"
+                class="input"
+                name="serialNumber"
+                type="text"
+                inputmode="text"
+                autocomplete="off"
+                spellcheck="false"
+                required
+                minlength="5"
+                maxlength="20"
+                placeholder="Bijvoorbeeld H2X394N01234"
+              />
+              <p id="serialNumberError" class="error" role="alert"></p>
+            </div>
 
-          <div class="field">
-            <label for="hoursCounter">Urenstand <span class="visually-hidden">(verplicht)</span></label>
-            <input
-              id="hoursCounter"
-              class="input"
-              name="hoursCounter"
-              type="text"
-              inputmode="numeric"
-              autocomplete="off"
-              spellcheck="false"
-              required
-              maxlength="6"
-              placeholder="Bijvoorbeeld 3650"
-            />
-            <p id="hoursCounterError" class="error" role="alert"></p>
-          </div>
+            <div class="field">
+              <label for="hoursCounter">Urenstand <span class="visually-hidden">(verplicht)</span></label>
+              <input
+                id="hoursCounter"
+                class="input"
+                name="hoursCounter"
+                type="text"
+                inputmode="numeric"
+                autocomplete="off"
+                spellcheck="false"
+                required
+                maxlength="6"
+                placeholder="Bijvoorbeeld 3650"
+              />
+              <p id="hoursCounterError" class="error" role="alert"></p>
+            </div>
 
-          <div class="field">
-            <label for="faultCodes">Foutcodes (optioneel)</label>
-            <textarea
-              id="faultCodes"
-              class="input"
-              name="faultCodes"
-              rows="2"
-              inputmode="text"
-              placeholder="Bijvoorbeeld 224-01, 280-05"
-            ></textarea>
-            <p id="faultCodesError" class="error" role="alert"></p>
-          </div>
+            <div class="field">
+              <label for="faultCodes">Foutcodes (optioneel)</label>
+              <textarea
+                id="faultCodes"
+                class="input"
+                name="faultCodes"
+                rows="2"
+                inputmode="text"
+                placeholder="Bijvoorbeeld 224-01, 280-05"
+              ></textarea>
+              <p id="faultCodesError" class="error" role="alert"></p>
+            </div>
 
-          <p id="precheckStatus" class="precheck-status warn" role="status">
-            Serienummer en urenstand zijn verplicht. Voeg foutcodes toe als je die hebt.
-          </p>
+            <p id="precheckStatus" class="precheck-status warn" role="status">
+              Serienummer en urenstand zijn verplicht. Voeg foutcodes toe als je die hebt.
+            </p>
 
-          <div class="prechat-actions">
-            <button id="startChat" class="btn btn-primary" type="submit">Start chat met AIMY</button>
-            <button id="resetPrechat" class="btn btn-ghost" type="button">Wissen</button>
-          </div>
-        </form>
+            <div class="prechat-actions">
+              <button id="startChat" class="btn btn-primary" type="submit">Start chat met AIMY</button>
+              <button id="resetPrechat" class="btn btn-ghost" type="button">Wissen</button>
+            </div>
+          </form>
 
-        <ul class="prechat-benefits">
-          <li>AIMY gebruikt je gegevens om antwoorden te personaliseren.</li>
-          <li>We slaan alles lokaal op – niets wordt zonder jouw actie verstuurd.</li>
-          <li>Je kunt de gegevens later opnieuw gebruiken of aanpassen.</li>
-        </ul>
+          <ul class="prechat-benefits">
+            <li>AIMY gebruikt je gegevens om antwoorden te personaliseren.</li>
+            <li>We slaan alles lokaal op – niets wordt zonder jouw actie verstuurd.</li>
+            <li>Je kunt de gegevens later opnieuw gebruiken of aanpassen.</li>
+          </ul>
 
-        <p class="prechat-footnote">Klaar? Start de chat of bekijk een eerdere sessie.</p>
-      </article>
-    </main>
+          <p class="prechat-footnote">Klaar? Start de chat of bekijk een eerdere sessie.</p>
+        </article>
+      </main>
+    </div>
+
+    <nav class="quick-actions" aria-label="Snelle acties">
+      <a class="btn btn-ghost btn-pill" href="history.html">Bekijk chatgeschiedenis</a>
+      <a class="btn btn-primary btn-pill" href="chat.html">Open chat</a>
+    </nav>
   </div>
-
-  <nav class="quick-actions" aria-label="Snelle acties">
-    <a class="btn btn-ghost btn-pill" href="history.html">Bekijk chatgeschiedenis</a>
-    <a class="btn btn-primary btn-pill" href="chat.html">Open chat</a>
-  </nav>
 
   <script type="module" src="scripts/prechat-page.js"></script>
 </body>
