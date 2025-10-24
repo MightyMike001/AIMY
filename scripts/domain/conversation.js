@@ -1,4 +1,5 @@
 import { ensureIsoString, mapDocuments, mapMessages, toStringOr } from '../utils/history.js';
+import { ensureFaultCodeList, formatFaultCodes } from '../../js/prechat.js';
 
 const DEFAULT_HISTORY_LIMIT = 12;
 const DEFAULT_MAX_LENGTH = 4000;
@@ -64,11 +65,13 @@ export function selectDocIds(docs, { limit = MAX_DOC_IDS } = {}){
 function normalizePrechat(prechat){
   const serialNumber = normalizeString(toStringOr(prechat?.serialNumber));
   const hours = normalizeString(toStringOr(prechat?.hours));
-  const faultCodes = normalizeString(toStringOr(prechat?.faultCodes));
+  const faultCodeList = ensureFaultCodeList(prechat?.faultCodeList || prechat?.faultCodes);
+  const faultCodes = formatFaultCodes(faultCodeList);
   return {
     serialNumber,
     hours,
     faultCodes,
+    faultCodeList,
     ready: prechat?.ready === true,
     completed: prechat?.completed === true,
     valid: prechat?.valid === true
@@ -81,6 +84,7 @@ export function preparePrechatPayload(prechat){
     serialNumber: normalized.serialNumber,
     hours: normalized.hours,
     faultCodes: normalized.faultCodes,
+    faultCodeList: normalized.faultCodeList,
     ready: normalized.ready,
     completed: normalized.completed,
     valid: normalized.valid
@@ -110,6 +114,7 @@ export function buildHistoryEntry(state, {
     title,
     serialNumber: prechat.serialNumber,
     faultCodes: prechat.faultCodes,
+    faultCodeList: prechat.faultCodeList,
     hours: prechat.hours,
     messages,
     docs,
@@ -127,7 +132,8 @@ export function buildMetadata(prechat){
   return {
     serialNumber: normalized.serialNumber,
     hours: normalized.hours,
-    faultCodes: normalized.faultCodes
+    faultCodes: normalized.faultCodes,
+    faultCodeList: normalized.faultCodeList
   };
 }
 
