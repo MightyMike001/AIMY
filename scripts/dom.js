@@ -23,6 +23,9 @@ export function getElements(){
     summaryHours: $('#summaryHours'),
     summaryFaults: $('#summaryFaults'),
     editPrechatBtn: $('#editPrechat'),
-    bannerInfo: $('#banner-info')
+    bannerInfo: $('#banner-info'),
+    bannerSerial: $('#bannerSerial'),
+    bannerHours: $('#bannerHours'),
+    bannerFaults: $('#bannerFaults')
   };
 }
