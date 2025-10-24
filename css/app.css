@@ -372,6 +372,14 @@ body.app-page .page-shell {
   gap: var(--s-4);
 }
 
+#precheckForm {
+  gap: 0;
+}
+
+.prechat-card .field {
+  margin-bottom: 0;
+}
+
 .prechat-header {
   display: flex;
   flex-wrap: wrap;
