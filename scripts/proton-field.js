@@ -57,8 +57,9 @@ export function initProtonField({
   let resizeFrame = null;
   let resizeObserver = null;
 
-  const BASE_COUNT = 32;
-  const MAX_COUNT = 72;
+  const BASE_COUNT = 24;
+  const MAX_COUNT = 48;
+  const DENSITY_DIVISOR = 60000;
 
   function createPalette(){
     const palettes = [
@@ -100,14 +101,14 @@ export function initProtonField({
         anchorY: anchor.y + (Math.random() - 0.5) * spreadValue(longestSide, 0.18),
         baseOrbit,
         orbitJitter: baseOrbit * (0.12 + Math.random() * 0.24),
-        orbitSpeed: 0.08 + Math.random() * 0.22,
+        orbitSpeed: 0.006 + Math.random() * 0.014,
         verticalSkew: 0.62 + Math.random() * 0.42,
         size: 2.4 + Math.random() * 3.6,
         glow: palette,
         flare: 0.42 + Math.random() * 0.36,
         offset: Math.random() * Math.PI * 2,
         rotationDirection: Math.random() > 0.5 ? 1 : -1,
-        pulseSpeed: 1.2 + Math.random() * 1.6,
+        pulseSpeed: 0.18 + Math.random() * 0.32,
         trailStrength: 0.05 + Math.random() * 0.08,
         createdAt: now + index * 18
       };
@@ -145,10 +146,12 @@ export function initProtonField({
     canvasEl.style.width = `${cssWidth}px`;
     canvasEl.style.height = `${cssHeight}px`;
 
+    const area = cssWidth * cssHeight;
+    const targetDensity = Math.max(BASE_COUNT, area / DENSITY_DIVISOR);
     const targetCount = Math.round(
       Math.min(
         MAX_COUNT,
-        BASE_COUNT + (cssWidth / 320) * 6 + (cssHeight / 540) * 5
+        targetDensity
       )
     );
 
@@ -184,7 +187,7 @@ export function initProtonField({
       Math.max(width, height) * 0.75
     );
 
-    const pulse = reduceMotion ? 0.4 : 0.4 + Math.sin(time * 0.00035) * 0.08;
+    const pulse = reduceMotion ? 0.4 : 0.4 + Math.sin(time * 0.00018) * 0.08;
     gradient.addColorStop(0, `rgba(11, 40, 78, ${0.32 + pulse})`);
     gradient.addColorStop(0.55, 'rgba(5, 16, 38, 0.42)');
     gradient.addColorStop(1, 'rgba(2, 4, 12, 0.82)');
@@ -199,7 +202,7 @@ export function initProtonField({
 
     ctx.globalCompositeOperation = 'lighter';
     for(let i = 0; i < layers; i += 1){
-      const progress = ((time * 0.00008) + i * 0.18) % 1;
+      const progress = ((time * 0.00004) + i * 0.18) % 1;
       const radius = base + progress * base * 1.8;
       const alpha = Math.max(0, 0.08 - progress * 0.08);
 
