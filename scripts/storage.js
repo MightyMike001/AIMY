@@ -1,14 +1,11 @@
-import { CHAT_KEY, CHAT_HISTORY_KEY, GREETING } from './constants.js';
-import { addMessage } from './messages.js';
+import { CHAT_KEY, CHAT_HISTORY_KEY } from './constants.js';
 import { resetConversation } from './state.js';
-import { renderDocList } from './ingest.js';
 import {
-  ensureIsoString,
   mapDocuments,
   mapMessages,
-  normalizeHistoryRecord,
-  toStringOr
+  normalizeHistoryRecord
 } from './utils/history.js';
+import { buildHistoryEntry } from './domain/conversation.js';
 
 function readHistory(){
   try{
@@ -53,18 +50,19 @@ export function setupPersistence(state){
   });
 }
 
-export function restoreChat({ state, messagesEl, docListEl, ingestBadge }){
+export function restoreChatState(state){
   try{
     const raw = localStorage.getItem(CHAT_KEY);
     if(!raw){
-      return;
+      state.streaming = false;
+      return { restored: false };
     }
     const dump = JSON.parse(raw);
     if(!dump){
-      return;
+      state.streaming = false;
+      return { restored: false };
     }
     state.docs = mapDocuments(dump.docs);
-    renderDocList(state, docListEl, ingestBadge);
 
     if(typeof dump.chatId === 'string' && dump.chatId){
       state.chatId = dump.chatId;
@@ -73,18 +71,22 @@ export function restoreChat({ state, messagesEl, docListEl, ingestBadge }){
     const restoredMessages = mapMessages(dump.messages, { limit: 50 });
     if(restoredMessages.length){
       state.messages = restoredMessages;
-      messagesEl.innerHTML = '';
-      state.messages.forEach(m => {
-        addMessage(state, messagesEl, m.role === 'user' ? 'user' : 'assistant', m.content, { track: false, scroll: false });
-      });
-      messagesEl.scrollTop = messagesEl.scrollHeight;
     }
     state.streaming = false;
+    return {
+      restored: restoredMessages.length > 0,
+      messages: state.messages,
+      docs: state.docs
+    };
   }catch{
     resetConversation();
-    messagesEl.innerHTML = '';
-    addMessage(state, messagesEl, 'assistant', GREETING, { track: false, scroll: false });
     state.streaming = false;
+    return {
+      restored: false,
+      messages: state.messages,
+      docs: state.docs,
+      error: true
+    };
   }
 }
 
@@ -101,37 +103,14 @@ export function persistHistorySnapshot(state){
     if(!state || typeof state.chatId !== 'string' || !state.chatId){
       return;
     }
-    const prechat = state.prechat || {};
-    const serialNumber = toStringOr(prechat.serialNumber);
-    const faultCodes = toStringOr(prechat.faultCodes);
-    const hours = toStringOr(prechat.hours);
-    if(!serialNumber){
-      return;
-    }
-
     const history = readHistory();
     const nowIso = new Date().toISOString();
-    const messages = mapMessages(state.messages, { limit: 100 });
-    const docs = mapDocuments(state.docs);
-    const title = faultCodes ? `${serialNumber} – ${faultCodes}` : serialNumber;
-
     const existingIndex = history.findIndex(item => item.id === state.chatId);
     const existing = existingIndex > -1 ? history[existingIndex] : null;
-    const entry = {
-      id: state.chatId,
-      title,
-      serialNumber,
-      faultCodes,
-      hours,
-      messages,
-      docs,
-      createdAt: ensureIsoString(existing?.createdAt, nowIso),
-      updatedAt: nowIso,
-      archived: existing?.archived === true,
-      lastOpenedAt: existing?.lastOpenedAt == null
-        ? null
-        : ensureIsoString(existing.lastOpenedAt, null)
-    };
+    const entry = buildHistoryEntry(state, { existing, nowIso });
+    if(!entry){
+      return;
+    }
 
     if(existingIndex > -1){
       history[existingIndex] = entry;

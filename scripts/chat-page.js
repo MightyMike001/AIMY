@@ -2,12 +2,12 @@ import './background.js';
 import { GREETING } from './constants.js';
 import { state } from './state.js';
 import { getElements } from './dom.js';
-import { addMessage, appendStreamChunk } from './messages.js';
+import { addMessage, appendStreamChunk, renderMessages } from './messages.js';
 import { setupIngest } from './ingest.js';
 import { loadConfig, persistConfig } from './config.js';
 import { initSettings } from './settings.js';
 import { createChatController } from './chat.js';
-import { setupPersistence, restoreChat, persistHistorySnapshot } from './storage.js';
+import { setupPersistence, restoreChatState, persistHistorySnapshot } from './storage.js';
 import { runTests } from './tests.js';
 import { fmtBytes } from './utils/format.js';
 import { loadPrechat } from './prechat-storage.js';
@@ -130,12 +130,15 @@ initSettings({
   closeSettingsBtn: elements.closeSettingsBtn
 });
 
-restoreChat({
-  state,
-  messagesEl: elements.messagesEl,
-  docListEl: elements.docList,
-  ingestBadge: elements.ingestBadge
-});
+const restoreResult = restoreChatState(state);
+
+if(restoreResult?.error){
+  console.warn('chat-page: kon chat niet herstellen uit opslag');
+}
+
+if(elements.messagesEl){
+  renderMessages(state, elements.messagesEl);
+}
 
 persistHistorySnapshot(state);
 

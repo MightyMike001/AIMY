@@ -137,3 +137,17 @@ export function appendStreamChunk(state, messagesEl, chunk){
     current.content = (current.content || '') + chunk;
   }
 }
+
+export function renderMessages(state, messagesEl){
+  if(!messagesEl){
+    return;
+  }
+  messagesEl.innerHTML = '';
+  state.messages.forEach((message) => {
+    addMessage(state, messagesEl, message.role, message.content, {
+      track: false,
+      scroll: false
+    });
+  });
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
