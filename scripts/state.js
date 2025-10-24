@@ -1,11 +1,12 @@
 import { GREETING } from './constants.js';
+import { safeRandomId } from './utils/random.js';
 
 export const state = {
   docs: [],
   messages: [
     { role: 'assistant', content: GREETING }
   ],
-  chatId: crypto.randomUUID(),
+  chatId: safeRandomId('chat'),
   streaming: false,
   prechat: {
     serialNumber: '',
@@ -19,7 +20,7 @@ export const state = {
 };
 
 export function resetConversation(){
-  state.chatId = crypto.randomUUID();
+  state.chatId = safeRandomId('chat');
   state.messages = [
     { role: 'assistant', content: GREETING }
   ];

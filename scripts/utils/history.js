@@ -1,3 +1,5 @@
+import { safeRandomId } from './random.js';
+
 const DEFAULT_DOC_NAME = 'Onbekend document';
 const DEFAULT_DOC_PREFIX = 'doc';
 
@@ -27,15 +29,12 @@ function toUploadTimestamp(value, fallback){
   return fallback;
 }
 
-function computeFallbackDocId({ index, now, prefix }){
-  if(typeof crypto?.randomUUID === 'function'){
-    return crypto.randomUUID();
-  }
-  return `${prefix}-${index}-${now}`;
+function computeFallbackDocId({ prefix }){
+  return safeRandomId(prefix);
 }
 
-function normalizeDocument(doc, { index, now, prefix }){
-  const fallbackId = computeFallbackDocId({ index, now, prefix });
+function normalizeDocument(doc, { now, prefix }){
+  const fallbackId = computeFallbackDocId({ prefix });
   const id = typeof doc?.id === 'string' && doc.id ? doc.id : fallbackId;
   const name = typeof doc?.name === 'string' && doc.name ? doc.name : DEFAULT_DOC_NAME;
   const size = toFiniteNumber(doc?.size, 0);
@@ -47,7 +46,7 @@ export function mapDocuments(docs, { now = Date.now(), prefix = DEFAULT_DOC_PREF
   if(!Array.isArray(docs)){
     return [];
   }
-  return docs.map((doc, index) => normalizeDocument(doc, { index, now, prefix }));
+  return docs.map((doc) => normalizeDocument(doc, { now, prefix }));
 }
 
 function normalizeMessage(message){
