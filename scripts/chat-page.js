@@ -18,8 +18,15 @@ const config = loadConfig();
 const elements = getElements();
 const defaultPlaceholder = elements.inputEl ? elements.inputEl.getAttribute('placeholder') || '' : '';
 const PRECHAT_DISABLED_PLACEHOLDER = 'Open AIMY via de startpagina en vul de werkbongegevens in.';
+const BANNER_FAULTS_EMPTY = 'Geen foutcodes opgegeven';
+
+let lastBannerText = '';
+let bannerAnimationTimer = null;
+let summaryObserver = null;
 
 initViewportObserver();
+
+setupBannerObservers();
 
 applyComposerAvailability(false);
 hydratePrechatState();
@@ -73,6 +80,87 @@ function renderPrechatSummary(){
     elements.summaryFaults.textContent = hasFaults ? prechat.faultCodes : 'Geen foutcodes opgegeven';
     elements.summaryFaults.classList.toggle('empty', !hasFaults);
   }
+  updateBannerInfo(prechat);
+}
+
+function updateBannerInfo(source){
+  if(!elements.bannerInfo){
+    return;
+  }
+  const serial = sanitizeBannerValue(source?.serialNumber);
+  const hours = sanitizeBannerValue(source?.hours);
+  const faults = sanitizeFaultValue(source?.faultCodes);
+  const bannerText = `Serienummer: ${serial || '—'} | Urenstand: ${hours || '—'} | Foutcodes: ${faults || BANNER_FAULTS_EMPTY}`;
+  if(bannerText === lastBannerText){
+    return;
+  }
+  lastBannerText = bannerText;
+  elements.bannerInfo.textContent = bannerText;
+  triggerBannerAnimation();
+}
+
+function triggerBannerAnimation(){
+  if(!elements.bannerInfo){
+    return;
+  }
+  elements.bannerInfo.classList.remove('banner-info-animate');
+  // Force reflow to restart the animation when the text changes rapidly.
+  void elements.bannerInfo.offsetWidth;
+  elements.bannerInfo.classList.add('banner-info-animate');
+  if(bannerAnimationTimer){
+    window.clearTimeout(bannerAnimationTimer);
+  }
+  bannerAnimationTimer = window.setTimeout(() => {
+    elements.bannerInfo?.classList.remove('banner-info-animate');
+  }, 920);
+}
+
+function sanitizeBannerValue(value){
+  if(typeof value !== 'string'){
+    return '';
+  }
+  const trimmed = value.trim();
+  if(!trimmed || trimmed === '—'){
+    return '';
+  }
+  return trimmed;
+}
+
+function sanitizeFaultValue(value){
+  const cleaned = sanitizeBannerValue(value);
+  if(!cleaned){
+    return '';
+  }
+  return cleaned.toLowerCase() === BANNER_FAULTS_EMPTY.toLowerCase() ? '' : cleaned;
+}
+
+function updateBannerFromElements(){
+  updateBannerInfo({
+    serialNumber: elements.summarySerial ? elements.summarySerial.textContent || '' : '',
+    hours: elements.summaryHours ? elements.summaryHours.textContent || '' : '',
+    faultCodes: elements.summaryFaults ? elements.summaryFaults.textContent || '' : ''
+  });
+}
+
+function setupBannerObservers(){
+  if(summaryObserver || !elements.bannerInfo){
+    return;
+  }
+  const targets = [elements.summarySerial, elements.summaryHours, elements.summaryFaults].filter(Boolean);
+  if(!targets.length){
+    return;
+  }
+  summaryObserver = new MutationObserver(() => {
+    updateBannerFromElements();
+  });
+  targets.forEach((target) => {
+    summaryObserver.observe(target, {
+      characterData: true,
+      childList: true,
+      subtree: true
+    });
+  });
+  updateBannerFromElements();
 }
 
 function sharePrechatIntro(){
@@ -210,8 +298,59 @@ if(elements.newChatBtn){
 
 if(elements.editPrechatBtn){
   elements.editPrechatBtn.addEventListener('click', () => {
+    updateBannerInfo(state.prechat);
     window.location.href = 'prechat.html';
   });
+}
+
+window.addEventListener('focus', syncPrechatFromStorage);
+window.addEventListener('pageshow', () => {
+  if(document.visibilityState === 'visible'){
+    syncPrechatFromStorage();
+  }
+});
+
+function syncPrechatFromStorage(){
+  const stored = loadPrechat();
+  if(!stored){
+    return;
+  }
+  const serial = stored.serialNumber || '';
+  const hours = stored.hours || '';
+  const faults = stored.faultCodes || '';
+  const ready = Boolean(serial && hours);
+  const prechat = state.prechat;
+  const changed =
+    !prechat ||
+    prechat.serialNumber !== serial ||
+    prechat.hours !== hours ||
+    prechat.faultCodes !== faults;
+  if(!changed){
+    return;
+  }
+  if(!state.prechat){
+    state.prechat = {
+      serialNumber: serial,
+      hours,
+      faultCodes: faults,
+      ready,
+      completed: ready,
+      valid: ready,
+      summaryMessageIndex: null
+    };
+  }else{
+    state.prechat.serialNumber = serial;
+    state.prechat.hours = hours;
+    state.prechat.faultCodes = faults;
+    state.prechat.ready = ready;
+    state.prechat.completed = state.prechat.ready;
+    state.prechat.valid = state.prechat.ready;
+  }
+  applyComposerAvailability(ready);
+  renderPrechatSummary();
+  if(state.prechat.ready){
+    sharePrechatIntro();
+  }
 }
 
 setupPersistence(state);

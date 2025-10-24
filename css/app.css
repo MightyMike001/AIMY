@@ -29,6 +29,74 @@ body.app-page .page-shell {
   gap: var(--s-4);
 }
 
+.banner-info {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 44px;
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--r-lg);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.04));
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.32);
+  color: rgba(255, 255, 255, 0.94);
+  font-size: clamp(13px, 2vw, 16px);
+  font-weight: 500;
+  letter-spacing: 0.015em;
+  line-height: 1.4;
+  backdrop-filter: blur(18px) saturate(130%);
+  -webkit-backdrop-filter: blur(18px) saturate(130%);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background 220ms ease, box-shadow 220ms ease, color 220ms ease, transform 220ms ease;
+}
+
+.banner-info::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(120% 120% at 12% 18%, rgba(255, 255, 255, 0.32), transparent 60%);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.banner-info.banner-info-animate {
+  animation: banner-info-pulse 900ms ease;
+}
+
+@keyframes banner-info-pulse {
+  0% {
+    opacity: 0.7;
+    transform: translateY(-2px);
+    box-shadow: 0 22px 42px rgba(20, 60, 120, 0.35);
+  }
+
+  45% {
+    opacity: 1;
+    transform: translateY(0);
+    box-shadow: 0 26px 48px rgba(64, 145, 255, 0.34);
+  }
+
+  100% {
+    opacity: 0.95;
+    transform: translateY(0);
+    box-shadow: 0 18px 36px rgba(0, 0, 0, 0.32);
+  }
+}
+
+@media (max-width: 640px) {
+  .banner-info {
+    font-size: clamp(12px, 3.6vw, 14px);
+    padding: var(--s-2) var(--s-3);
+    min-height: 40px;
+    letter-spacing: 0.01em;
+  }
+}
+
 .app-brand {
   display: flex;
   align-items: center;
