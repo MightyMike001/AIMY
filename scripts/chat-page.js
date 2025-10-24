@@ -13,6 +13,7 @@ import { fmtBytes } from './utils/format.js';
 import { loadPrechat } from './prechat-storage.js';
 import { initViewportObserver } from './utils/viewport.js';
 import { normalizeWebhookUrl, sanitizeHeaderValue } from './utils/security.js';
+import { ensureFaultCodeList, formatFaultCodes } from '../js/prechat.js';
 
 const config = loadConfig();
 const elements = getElements();
@@ -30,15 +31,21 @@ hydratePrechatState();
 
 function hydratePrechatState(){
   const stored = loadPrechat();
-  if(!stored || !stored.serialNumber || !stored.hours){
-    window.location.replace('prechat.html');
+  const hasValidHours = Number.isFinite(stored?.hoursValue) && stored.hoursValue >= 0;
+  if(!stored || !stored.serialNumber || !stored.hours || !hasValidHours){
+    window.location.replace('prechat.html?reason=missing');
     return;
   }
+
+  const faultCodeList = ensureFaultCodeList(stored.faultCodeList || stored.faultCodes);
+  const faultCodesText = stored.faultCodes || formatFaultCodes(faultCodeList);
 
   state.prechat = {
     serialNumber: stored.serialNumber || '',
     hours: stored.hours || '',
-    faultCodes: stored.faultCodes || '',
+    hoursValue: Number.isFinite(stored.hoursValue) ? Number(stored.hoursValue) : null,
+    faultCodes: faultCodesText,
+    faultCodeList,
     ready: true,
     completed: true,
     valid: true,
@@ -64,7 +71,8 @@ function renderPrechatSummary(){
   const prechat = state.prechat || {
     serialNumber: '',
     hours: '',
-    faultCodes: ''
+    faultCodes: '',
+    faultCodeList: []
   };
   updateBannerInfo(prechat);
 }
@@ -75,7 +83,10 @@ function updateBannerInfo(source){
   }
   const serial = sanitizeBannerValue(source?.serialNumber);
   const hours = sanitizeBannerValue(source?.hours);
-  const faults = sanitizeFaultValue(source?.faultCodes);
+  const faultsText = Array.isArray(source?.faultCodeList)
+    ? formatFaultCodes(source.faultCodeList)
+    : source?.faultCodes;
+  const faults = sanitizeFaultValue(faultsText);
   const serialText = serial || '—';
   const hoursText = hours || '—';
   const faultsText = faults || BANNER_FAULTS_EMPTY;
@@ -132,7 +143,8 @@ function sharePrechatIntro(){
   }
 
   const prechat = state.prechat;
-  const faultsText = prechat.faultCodes ? prechat.faultCodes : 'geen foutcodes opgegeven';
+  const faultsDisplay = formatFaultCodes(prechat.faultCodeList);
+  const faultsText = faultsDisplay ? faultsDisplay : 'geen foutcodes opgegeven';
   const summaryText = [
     'Top, ik heb de volgende gegevens ontvangen:',
     `• Serienummer: ${prechat.serialNumber || 'onbekend'}`,

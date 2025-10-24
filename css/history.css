@@ -119,3 +119,12 @@
   font-size: var(--fs-2);
   color: var(--text-dim);
 }
+
+.history-highlight,
+.history-item-preview mark {
+  background: rgba(64, 145, 255, 0.32);
+  color: #ffffff;
+  padding: 0 2px;
+  border-radius: var(--r-xs);
+  font-weight: 600;
+}

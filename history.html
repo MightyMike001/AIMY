@@ -9,11 +9,11 @@
   <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=()" />
   <title>AIMY – Chatgeschiedenis</title>
   <meta name="description" content="Bewaar, open en archiveer eerdere AIMY-chats met serienummer en foutcodes." />
-  <link rel="stylesheet" href="css/tokens.css" />
-  <link rel="stylesheet" href="css/base.css" />
-  <link rel="stylesheet" href="css/components.css" />
-  <link rel="stylesheet" href="css/app.css" />
-  <link rel="stylesheet" href="css/history.css" />
+  <link rel="stylesheet" href="css/tokens.css?v=20251024" />
+  <link rel="stylesheet" href="css/base.css?v=20251024" />
+  <link rel="stylesheet" href="css/components.css?v=20251024" />
+  <link rel="stylesheet" href="css/app.css?v=20251024" />
+  <link rel="stylesheet" href="css/history.css?v=20251024" />
 </head>
 <body class="history-page" data-theme="dark">
   <div id="aimy-page">
@@ -41,8 +41,8 @@
             </div>
           </div>
           <nav class="app-actions" aria-label="Navigatie">
-            <a class="btn btn-ghost btn-small" href="prechat.html">Nieuwe werkbon</a>
-            <a class="btn btn-ghost btn-small" href="chat.html">Ga naar chat</a>
+            <a class="btn btn-ghost btn-small" href="prechat.html" aria-label="Ga naar nieuwe werkbon">Nieuwe werkbon</a>
+            <a class="btn btn-ghost btn-small" href="chat.html" aria-label="Ga naar chat">Ga naar chat</a>
           </nav>
         </div>
       </header>
@@ -55,7 +55,7 @@
           </div>
           <div class="history-search">
             <label class="sr-only" for="historySearch">Zoek op serienummer of foutcode</label>
-            <input id="historySearch" class="input" type="search" placeholder="Zoek op serienummer, foutcode of notities" autocomplete="off" />
+            <input id="historySearch" class="input" type="search" placeholder="Zoek op serienummer, foutcode of notities" autocomplete="off" aria-label="Zoek in opgeslagen chats" />
           </div>
         </section>
 
@@ -81,6 +81,6 @@
       </main>
     </div>
 
-  <script type="module" src="scripts/history-page.js"></script>
+  <script type="module" src="scripts/history-page.js?v=20251024"></script>
 </body>
 </html>
