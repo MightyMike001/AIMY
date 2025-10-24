@@ -43,12 +43,19 @@ export function initProtonField({
     };
   }
 
+  const containerEl = canvasEl.closest('#aimy-bg') || canvasEl.parentElement || document.body;
+  const visualViewport = window.visualViewport;
+
   let reduceMotion = Boolean(MOTION_QUERY?.matches);
   let animationId = null;
   let deviceRatio = 1;
   let width = 0;
   let height = 0;
+  let cssWidth = 0;
+  let cssHeight = 0;
   let protons = [];
+  let resizeFrame = null;
+  let resizeObserver = null;
 
   const BASE_COUNT = 32;
   const MAX_COUNT = 72;
@@ -111,20 +118,37 @@ export function initProtonField({
     return base * ratio + 120 * deviceRatio;
   }
 
-  function resize(){
-    deviceRatio = Math.min(window.devicePixelRatio || 1, 1.6);
-    width = Math.round(window.innerWidth * deviceRatio);
-    height = Math.round(window.innerHeight * deviceRatio);
+  function sizeCanvas(){
+    if(!containerEl){
+      return;
+    }
 
-    canvasEl.width = width;
-    canvasEl.height = height;
-    canvasEl.style.width = '100%';
-    canvasEl.style.height = '100%';
+    const rect = containerEl.getBoundingClientRect();
+    const nextCssWidth = Math.max(1, Math.round(rect.width));
+    const nextCssHeight = Math.max(1, Math.round(rect.height));
+    const nextDeviceRatio = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+
+    cssWidth = nextCssWidth;
+    cssHeight = nextCssHeight;
+    deviceRatio = nextDeviceRatio;
+    width = Math.floor(cssWidth * deviceRatio);
+    height = Math.floor(cssHeight * deviceRatio);
+
+    if(canvasEl.width !== width){
+      canvasEl.width = width;
+    }
+
+    if(canvasEl.height !== height){
+      canvasEl.height = height;
+    }
+
+    canvasEl.style.width = `${cssWidth}px`;
+    canvasEl.style.height = `${cssHeight}px`;
 
     const targetCount = Math.round(
       Math.min(
         MAX_COUNT,
-        BASE_COUNT + (window.innerWidth / 320) * 6 + (window.innerHeight / 540) * 5
+        BASE_COUNT + (cssWidth / 320) * 6 + (cssHeight / 540) * 5
       )
     );
 
@@ -133,6 +157,19 @@ export function initProtonField({
     if(reduceMotion){
       drawFrame(0);
     }
+  }
+
+  function queueResize(){
+    if(resizeFrame){
+      window.cancelAnimationFrame(resizeFrame);
+      resizeFrame = null;
+    }
+
+    resizeFrame = window.requestAnimationFrame(() => {
+      resizeFrame = null;
+      sizeCanvas();
+      start();
+    });
   }
 
   function drawBackdrop(time){
@@ -300,17 +337,25 @@ export function initProtonField({
     start();
   }
 
-  resize();
+  sizeCanvas();
   start();
 
-  const resizeHandler = () => {
-    window.requestAnimationFrame(() => {
-      resize();
-      start();
-    });
+  const onWindowResize = () => {
+    queueResize();
   };
 
-  window.addEventListener('resize', resizeHandler, { passive: true });
+  if(typeof ResizeObserver === 'function' && containerEl){
+    resizeObserver = new ResizeObserver(() => {
+      queueResize();
+    });
+    resizeObserver.observe(containerEl);
+  }
+
+  window.addEventListener('resize', onWindowResize, { passive: true });
+  window.addEventListener('orientationchange', onWindowResize);
+  if(visualViewport && typeof visualViewport.addEventListener === 'function'){
+    visualViewport.addEventListener('resize', onWindowResize);
+  }
   window.addEventListener('visibilitychange', () => {
     if(document.hidden){
       stop();
@@ -350,7 +395,22 @@ export function initProtonField({
     stop,
     destroy(){
       stop();
-      window.removeEventListener('resize', resizeHandler);
+      if(resizeFrame){
+        window.cancelAnimationFrame(resizeFrame);
+        resizeFrame = null;
+      }
+
+      if(resizeObserver){
+        resizeObserver.disconnect();
+        resizeObserver = null;
+      }
+
+      window.removeEventListener('resize', onWindowResize);
+      window.removeEventListener('orientationchange', onWindowResize);
+      if(visualViewport && typeof visualViewport.removeEventListener === 'function'){
+        visualViewport.removeEventListener('resize', onWindowResize);
+      }
+
       if(MOTION_QUERY){
         if(typeof MOTION_QUERY.removeEventListener === 'function'){
           MOTION_QUERY.removeEventListener('change', handleMotionChange);
