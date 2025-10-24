@@ -84,18 +84,24 @@ function renderPrechatSummary(){
 }
 
 function updateBannerInfo(source){
-  if(!elements.bannerInfo){
+  if(!elements.bannerInfo || !elements.bannerSerial || !elements.bannerHours || !elements.bannerFaults){
     return;
   }
   const serial = sanitizeBannerValue(source?.serialNumber);
   const hours = sanitizeBannerValue(source?.hours);
   const faults = sanitizeFaultValue(source?.faultCodes);
-  const bannerText = `Serienummer: ${serial || '—'} | Urenstand: ${hours || '—'} | Foutcodes: ${faults || BANNER_FAULTS_EMPTY}`;
+  const serialText = serial || '—';
+  const hoursText = hours || '—';
+  const faultsText = faults || BANNER_FAULTS_EMPTY;
+  const bannerText = `${serialText}|${hoursText}|${faultsText}`;
   if(bannerText === lastBannerText){
     return;
   }
   lastBannerText = bannerText;
-  elements.bannerInfo.textContent = bannerText;
+  elements.bannerSerial.textContent = serialText;
+  elements.bannerHours.textContent = hoursText;
+  elements.bannerFaults.textContent = faultsText;
+  elements.bannerFaults.classList.toggle('empty', !faults);
   triggerBannerAnimation();
 }
 

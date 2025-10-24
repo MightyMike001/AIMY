@@ -32,7 +32,10 @@ body.app-page .page-shell {
 .banner-info {
   position: relative;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: var(--s-1);
   width: 100%;
   min-height: 44px;
   padding: var(--s-3) var(--s-4);
@@ -45,12 +48,11 @@ body.app-page .page-shell {
   font-weight: 500;
   letter-spacing: 0.015em;
   line-height: 1.4;
+  text-align: right;
   backdrop-filter: blur(18px) saturate(130%);
   -webkit-backdrop-filter: blur(18px) saturate(130%);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
-  white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
   transition: background 220ms ease, box-shadow 220ms ease, color 220ms ease, transform 220ms ease;
 }
 
@@ -62,6 +64,25 @@ body.app-page .page-shell {
   background: radial-gradient(120% 120% at 12% 18%, rgba(255, 255, 255, 0.32), transparent 60%);
   opacity: 0.5;
   pointer-events: none;
+}
+
+.banner-info-line {
+  margin: 0;
+  display: flex;
+  gap: var(--s-1);
+  justify-content: flex-end;
+}
+
+.banner-info-label {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.banner-info-value {
+  color: rgba(255, 255, 255, 0.94);
+}
+
+.banner-info-value.empty {
+  opacity: 0.72;
 }
 
 .banner-info.banner-info-animate {
