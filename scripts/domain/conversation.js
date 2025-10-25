@@ -1,8 +1,9 @@
 import { mapDocuments, mapMessages, toStringOr } from '../utils/history.js';
 import { createHistoryTitle } from '../../js/history.js';
+import { maxMessageLen } from '../../js/config.js';
 
 const DEFAULT_HISTORY_LIMIT = 12;
-const DEFAULT_MAX_LENGTH = 4000;
+const DEFAULT_MAX_LENGTH = Number.isInteger(maxMessageLen) && maxMessageLen > 0 ? maxMessageLen : 4000;
 const MAX_HISTORY_MESSAGE_LIMIT = 100;
 const MAX_DOC_IDS = 50;
 
@@ -128,5 +129,6 @@ export const constants = {
   DEFAULT_HISTORY_LIMIT,
   DEFAULT_MAX_LENGTH,
   MAX_HISTORY_MESSAGE_LIMIT,
-  MAX_DOC_IDS
+  MAX_DOC_IDS,
+  maxMessageLen
 };

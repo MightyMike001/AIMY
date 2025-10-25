@@ -4,6 +4,7 @@ import { resetConversation } from './state.js';
 import { clearChatStorage, persistHistorySnapshot } from './storage.js';
 import { normalizeWebhookUrl, safeStringify } from './utils/security.js';
 import { errorToast } from '../js/ui-states.js';
+import { requestTimeoutMs, retries } from '../js/config.js';
 import {
   buildMessageWindow,
   buildMetadata,
@@ -12,8 +13,8 @@ import {
   selectDocIds
 } from './domain/conversation.js';
 
-const REQUEST_TIMEOUT_MS = 15000;
-const MAX_RETRY_ATTEMPTS = 3;
+const REQUEST_TIMEOUT_MS = Number.isFinite(requestTimeoutMs) ? requestTimeoutMs : 15000;
+const MAX_RETRY_ATTEMPTS = Number.isInteger(retries) && retries > 0 ? retries : 3;
 const RETRY_DELAYS_MS = [1000, 2000, 4000];
 const DEMO_FALLBACK_MESSAGE = 'Demo-antwoord (n8n URL niet ingesteld). Controleer hoofdschakelaar, noodstop, zekeringen en CAN-bus. Meet accuspanning (>24.0V) en log foutcode 224-01.';
 
