@@ -3,6 +3,7 @@ import { addMessage, appendStreamChunk, finalizeAssistantMessage, updateLastAssi
 import { resetConversation } from './state.js';
 import { clearChatStorage, persistHistorySnapshot } from './storage.js';
 import { normalizeWebhookUrl, safeStringify } from './utils/security.js';
+import { errorToast } from '../js/ui-states.js';
 import {
   buildMessageWindow,
   buildMetadata,
@@ -90,8 +91,14 @@ function createTimeoutSignal(){
   };
 }
 
-export function createChatController({ state, config, elements }){
+export function createChatController({ state, config, elements, onStateUpdated }){
   const { messagesEl, inputEl, sendBtn, newChatBtn, tempInput, citationsCheckbox } = elements;
+
+  const notifyStateUpdate = () => {
+    if(typeof onStateUpdated === 'function'){
+      onStateUpdated();
+    }
+  };
 
   async function send(options = {}){
     const { retryContent } = options;
@@ -123,6 +130,7 @@ export function createChatController({ state, config, elements }){
     if(!isRetry){
       addMessage(state, messagesEl, 'user', text);
       persistHistorySnapshot(state);
+      notifyStateUpdate();
       if(inputEl){
         inputEl.value = '';
       }
@@ -248,6 +256,7 @@ export function createChatController({ state, config, elements }){
         showAssistantError(state, messagesEl, retryMessage, () => {
           send({ retryContent: text });
         });
+        errorToast(retryMessage);
       }
     }finally{
       state.sending = false;
@@ -268,6 +277,7 @@ export function createChatController({ state, config, elements }){
         messagesEl.scrollTop = messagesEl.scrollHeight;
       }
       persistHistorySnapshot(state);
+      notifyStateUpdate();
     }
   }
 
@@ -279,6 +289,7 @@ export function createChatController({ state, config, elements }){
     clearChatStorage();
     messagesEl.innerHTML = '';
     addMessage(state, messagesEl, 'assistant', GREETING, { track: false, scroll: false });
+    notifyStateUpdate();
     if(inputEl){
       inputEl.value = '';
       inputEl.focus();

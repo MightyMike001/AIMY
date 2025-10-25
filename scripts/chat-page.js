@@ -14,6 +14,7 @@ import { loadPrechat, savePrechat } from './prechat-storage.js';
 import { initViewportObserver } from './utils/viewport.js';
 import { normalizeWebhookUrl, sanitizeHeaderValue } from './utils/security.js';
 import { createSessionContext, createSessionId, sanitizeSessionPayload } from '../js/session.js';
+import { createChatUiStateManager, errorToast, infoToast } from '../js/ui-states.js';
 
 const WEBHOOK_PING_TIMEOUT_MS = 5000;
 const WEBHOOK_STATUS_STATES = {
@@ -105,6 +106,41 @@ const defaultPlaceholder = elements.inputEl ? elements.inputEl.getAttribute('pla
 const PRECHAT_DISABLED_PLACEHOLDER = 'Open AIMY via de startpagina en vul de werkbongegevens in.';
 const BANNER_FAULTS_EMPTY = 'Geen foutcodes opgegeven';
 
+const chatUi = createChatUiStateManager({
+  messagesEl: elements.messagesEl,
+  onConnectWebhook(){
+    if(elements.settingsBtn){
+      elements.settingsBtn.click();
+    }
+  },
+  onUploadDocs(){
+    if(elements.fileInput){
+      elements.fileInput.click();
+    }else if(elements.drop){
+      elements.drop.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  },
+  onStartChat(){
+    if(elements.inputEl){
+      elements.inputEl.focus();
+    }
+  }
+});
+
+chatUi.showLoading();
+
+const hasUserMessages = () => Array.isArray(state.messages) && state.messages.some((message) => message?.role === 'user');
+const hasUploadedDocs = () => Array.isArray(state.docs) && state.docs.length > 0;
+const hasWebhookConfigured = () => Boolean(normalizeWebhookUrl(config.N8N_WEBHOOK || ''));
+
+function refreshUiState(){
+  chatUi.update({
+    hasMessages: hasUserMessages(),
+    hasDocs: hasUploadedDocs(),
+    hasWebhook: hasWebhookConfigured()
+  });
+}
+
 let lastBannerText = '';
 let bannerAnimationTimer = null;
 let webhookPingSeq = 0;
@@ -176,6 +212,7 @@ async function commitWebhookInput({ forcePing = false } = {}){
     lastPingSnapshot = { url: '', token: config.AUTH_VALUE || '', status: 'empty' };
     persistConfig(config);
     renderWebhookStatus('empty');
+    refreshUiState();
     return;
   }
   if(!validateUrl(raw)){
@@ -183,6 +220,8 @@ async function commitWebhookInput({ forcePing = false } = {}){
     lastPingSnapshot = { url: '', token: config.AUTH_VALUE || '', status: 'invalid' };
     persistConfig(config);
     renderWebhookStatus('invalid');
+    errorToast('Ongeldige webhook-URL. Gebruik een volledige https://-link.');
+    refreshUiState();
     return;
   }
   const normalized = normalizeWebhookUrl(raw);
@@ -191,6 +230,8 @@ async function commitWebhookInput({ forcePing = false } = {}){
     lastPingSnapshot = { url: '', token: config.AUTH_VALUE || '', status: 'invalid' };
     persistConfig(config);
     renderWebhookStatus('invalid');
+    errorToast('Ongeldige webhook-URL. Controleer het adres en probeer opnieuw.');
+    refreshUiState();
     return;
   }
   if(elements.webhookInput.value !== normalized){
@@ -215,6 +256,7 @@ async function commitWebhookInput({ forcePing = false } = {}){
   if(!shouldPing){
     renderWebhookStatus(previous.status || 'success');
     lastPingSnapshot = { ...previous, url: normalized, token: currentToken };
+    refreshUiState();
     return;
   }
 
@@ -233,13 +275,23 @@ async function commitWebhookInput({ forcePing = false } = {}){
   if(result?.ok){
     lastPingSnapshot = { url: normalized, token: currentToken, status: 'success' };
     renderWebhookStatus('success');
+    if(previous.status !== 'success'){
+      infoToast('Webhook succesvol verbonden.');
+    }
   }else if(result?.timeout){
     lastPingSnapshot = { url: normalized, token: currentToken, status: 'timeout' };
     renderWebhookStatus('timeout');
+    if(previous.status !== 'timeout'){
+      errorToast('Webhook niet bereikbaar (timeout van 5 seconden).');
+    }
   }else{
     lastPingSnapshot = { url: normalized, token: currentToken, status: 'error' };
     renderWebhookStatus('error');
+    if(previous.status !== 'error'){
+      errorToast('Webhook niet bereikbaar. Controleer de URL of token.');
+    }
   }
+  refreshUiState();
 }
 
 function persistToken(){
@@ -482,10 +534,16 @@ const restoreResult = restoreChatState(state);
 
 if(restoreResult?.error){
   console.warn('chat-page: kon chat niet herstellen uit opslag');
+  errorToast('Kon chatgeschiedenis niet laden. Er is een nieuwe sessie gestart.');
 }
 
 if(elements.messagesEl){
   renderMessages(state, elements.messagesEl);
+  window.requestAnimationFrame(() => {
+    refreshUiState();
+  });
+}else{
+  refreshUiState();
 }
 
 persistHistorySnapshot(state);
@@ -504,7 +562,8 @@ setupIngest({
   fileInput: elements.fileInput,
   docListEl: elements.docList,
   ingestBadge: elements.ingestBadge,
-  testBadge: elements.testBadge
+  testBadge: elements.testBadge,
+  onUploadsChange: refreshUiState
 });
 
 if(webhookStatusEl){
@@ -520,7 +579,8 @@ if(elements.webhookInput && config.N8N_WEBHOOK){
 const chat = createChatController({
   state,
   config,
-  elements
+  elements,
+  onStateUpdated: refreshUiState
 });
 
 if(elements.sendBtn){
