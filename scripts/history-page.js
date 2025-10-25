@@ -32,11 +32,7 @@ document.addEventListener('visibilitychange', () => {
 });
 
 function refreshHistory(){
-  historyItems = loadChatHistory().sort((a, b) => {
-    const aTime = Date.parse(a.updatedAt || '') || 0;
-    const bTime = Date.parse(b.updatedAt || '') || 0;
-    return bTime - aTime;
-  });
+  historyItems = loadChatHistory().sort((a, b) => getItemTimestamp(b) - getItemTimestamp(a));
   render();
 }
 
@@ -138,7 +134,7 @@ function createHistoryCard(item, archived){
   const archiveBtn = document.createElement('button');
   archiveBtn.type = 'button';
   archiveBtn.className = 'btn btn-ghost btn-small';
-  archiveBtn.textContent = archived ? 'Terugzetten' : 'Archiveer';
+  archiveBtn.textContent = archived ? 'Herstel' : 'Archiveer';
   archiveBtn.addEventListener('click', () => {
     setChatArchived(item.id, !archived);
     refreshHistory();
@@ -180,12 +176,12 @@ function getPreview(item){
 }
 
 function formatMeta(item, archived){
-  const updated = Date.parse(item.updatedAt || '') || Date.now();
+  const updated = getItemTimestamp(item) || Date.now();
   const updatedText = new Date(updated).toLocaleString('nl-NL', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' });
   if(archived){
-    return `Gearchiveerd • bijgewerkt op ${updatedText}`;
+    return `Gearchiveerd • opgeslagen op ${updatedText}`;
   }
-  return `Bijgewerkt op ${updatedText}`;
+  return `Opgeslagen op ${updatedText}`;
 }
 
 function openChat(item){
@@ -220,4 +216,24 @@ function updateCount(el, count){
     return;
   }
   el.textContent = count === 1 ? '1 chat' : `${count} chats`;
+}
+
+function getItemTimestamp(item){
+  if(!item){
+    return 0;
+  }
+  if(typeof item.ts === 'number' && Number.isFinite(item.ts)){
+    return item.ts;
+  }
+  if(typeof item.ts === 'string'){
+    const numeric = Number(item.ts);
+    if(Number.isFinite(numeric)){
+      return numeric;
+    }
+    const parsed = Date.parse(item.ts);
+    if(Number.isFinite(parsed)){
+      return parsed;
+    }
+  }
+  return 0;
 }

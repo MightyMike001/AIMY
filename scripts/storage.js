@@ -1,11 +1,8 @@
 import { CHAT_KEY, CHAT_HISTORY_KEY } from './constants.js';
 import { resetConversation } from './state.js';
-import {
-  mapDocuments,
-  mapMessages,
-  normalizeHistoryRecord
-} from './utils/history.js';
+import { mapDocuments, mapMessages } from './utils/history.js';
 import { buildHistoryEntry } from './domain/conversation.js';
+import { normalizeHistoryItem } from '../js/history.js';
 
 function readHistory(){
   try{
@@ -17,9 +14,9 @@ function readHistory(){
     if(!Array.isArray(data)){
       return [];
     }
-    const nowIso = new Date().toISOString();
+    const nowMs = Date.now();
     return data
-      .map(item => normalizeHistoryRecord(item, { nowIso }))
+      .map(item => normalizeHistoryItem(item, { fallbackTs: nowMs }))
       .filter(Boolean);
   }catch{
     return [];
@@ -28,7 +25,24 @@ function readHistory(){
 
 function writeHistory(history){
   try{
-    localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(history));
+    const nowMs = Date.now();
+    const normalized = Array.isArray(history)
+      ? history
+          .map(item => normalizeHistoryItem(item, { fallbackTs: nowMs }))
+          .filter(Boolean)
+          .map(item => ({
+            id: item.id,
+            title: item.title,
+            ts: item.ts,
+            archived: item.archived === true,
+            messages: Array.isArray(item.messages) ? item.messages : [],
+            docs: Array.isArray(item.docs) ? item.docs : [],
+            serialNumber: item.serialNumber || '',
+            faultCodes: item.faultCodes || '',
+            hours: item.hours || ''
+          }))
+      : [];
+    localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(normalized));
   }catch{
     /* ignore */
   }
@@ -108,10 +122,10 @@ export function persistHistorySnapshot(state){
       return;
     }
     const history = readHistory();
-    const nowIso = new Date().toISOString();
+    const nowMs = Date.now();
     const existingIndex = history.findIndex(item => item.id === state.chatId);
     const existing = existingIndex > -1 ? history[existingIndex] : null;
-    const entry = buildHistoryEntry(state, { existing, nowIso });
+    const entry = buildHistoryEntry(state, { existing, now: nowMs });
     if(!entry){
       return;
     }
@@ -138,7 +152,7 @@ export function setChatArchived(chatId, archived){
     return null;
   }
   history[index].archived = Boolean(archived);
-  history[index].updatedAt = new Date().toISOString();
+  history[index].ts = Date.now();
   writeHistory(history);
   return history[index];
 }
@@ -155,8 +169,7 @@ export function markChatOpened(chatId){
   if(index === -1){
     return null;
   }
-  history[index].lastOpenedAt = new Date().toISOString();
-  history[index].updatedAt = history[index].lastOpenedAt;
+  history[index].ts = Date.now();
   writeHistory(history);
   return history[index];
 }

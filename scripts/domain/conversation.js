@@ -1,4 +1,5 @@
-import { ensureIsoString, mapDocuments, mapMessages, toStringOr } from '../utils/history.js';
+import { mapDocuments, mapMessages, toStringOr } from '../utils/history.js';
+import { createHistoryTitle } from '../../js/history.js';
 
 const DEFAULT_HISTORY_LIMIT = 12;
 const DEFAULT_MAX_LENGTH = 4000;
@@ -89,36 +90,28 @@ export function preparePrechatPayload(prechat){
 
 export function buildHistoryEntry(state, {
   existing = null,
-  nowIso = new Date().toISOString()
+  now = Date.now()
 } = {}){
   if(!state || typeof state.chatId !== 'string' || !state.chatId){
     return null;
   }
   const prechat = normalizePrechat(state.prechat);
-  if(!prechat.serialNumber){
-    return null;
-  }
 
   const messages = mapMessages(state.messages, { limit: MAX_HISTORY_MESSAGE_LIMIT });
   const docs = mapDocuments(state.docs);
-  const title = prechat.faultCodes
-    ? `${prechat.serialNumber} – ${prechat.faultCodes}`
-    : prechat.serialNumber;
+  const title = createHistoryTitle(prechat.serialNumber, prechat.faultCodes);
+  const timestamp = Number.isFinite(now) ? now : Date.now();
 
   return {
     id: state.chatId,
     title,
+    ts: timestamp,
+    archived: existing?.archived === true,
     serialNumber: prechat.serialNumber,
     faultCodes: prechat.faultCodes,
     hours: prechat.hours,
     messages,
-    docs,
-    createdAt: ensureIsoString(existing?.createdAt, nowIso),
-    updatedAt: nowIso,
-    archived: existing?.archived === true,
-    lastOpenedAt: existing?.lastOpenedAt == null
-      ? null
-      : ensureIsoString(existing.lastOpenedAt, null)
+    docs
   };
 }
 
