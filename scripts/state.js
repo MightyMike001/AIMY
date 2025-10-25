@@ -4,7 +4,7 @@ import { createSessionId } from '../js/session.js';
 export const state = {
   docs: [],
   messages: [
-    { role: 'assistant', content: GREETING }
+    { role: 'assistant', content: GREETING, citations: [] }
   ],
   chatId: createSessionId(),
   sending: false,
@@ -23,7 +23,7 @@ export const state = {
 export function resetConversation(){
   state.chatId = createSessionId(state.prechat?.serialNumber);
   state.messages = [
-    { role: 'assistant', content: GREETING }
+    { role: 'assistant', content: GREETING, citations: [] }
   ];
   state.sending = false;
   state.streaming = false;

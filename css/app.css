@@ -301,6 +301,32 @@ body.app-page .page-shell {
   color: var(--text);
 }
 
+.bubble .citations {
+  margin-top: var(--s-4);
+  font-size: var(--fs-2);
+  color: rgba(190, 214, 255, 0.76);
+}
+
+.bubble .citations-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bubble .citations-list li {
+  padding: 2px 8px;
+  border-radius: var(--r-sm);
+  background: rgba(64, 145, 255, 0.18);
+  color: inherit;
+}
+
+body.citations-hidden .citations {
+  display: none;
+}
+
 .composer {
   display: flex;
   align-items: flex-end;
