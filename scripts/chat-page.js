@@ -303,12 +303,13 @@ function hydratePrechatState(){
 
 function applyComposerAvailability(ready){
   if(elements.inputEl){
-    elements.inputEl.disabled = !ready;
-    elements.inputEl.setAttribute('aria-disabled', String(!ready));
+    const disabled = !ready || state.sending;
+    elements.inputEl.disabled = disabled;
+    elements.inputEl.setAttribute('aria-disabled', String(disabled));
     elements.inputEl.placeholder = ready ? defaultPlaceholder : PRECHAT_DISABLED_PLACEHOLDER;
   }
-  if(elements.sendBtn && !state.streaming){
-    elements.sendBtn.disabled = !ready;
+  if(elements.sendBtn){
+    elements.sendBtn.disabled = !ready || state.streaming || state.sending;
   }
 }
 

@@ -7,6 +7,7 @@ export const state = {
     { role: 'assistant', content: GREETING }
   ],
   chatId: createSessionId(),
+  sending: false,
   streaming: false,
   prechat: {
     serialNumber: '',
@@ -24,4 +25,6 @@ export function resetConversation(){
   state.messages = [
     { role: 'assistant', content: GREETING }
   ];
+  state.sending = false;
+  state.streaming = false;
 }

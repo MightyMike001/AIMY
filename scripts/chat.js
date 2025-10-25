@@ -105,14 +105,31 @@ export function createChatController({ state, config, elements }){
 
     const providedText = typeof retryContent === 'string' ? retryContent : inputEl.value;
     const text = sanitizePrompt(providedText);
-    if(!text || state.streaming){
+    if(!text || state.sending || state.streaming){
       return;
     }
     const isRetry = typeof retryContent === 'string';
+
+    state.sending = true;
+    sendBtn.disabled = true;
+    if(inputEl){
+      inputEl.disabled = true;
+      inputEl.setAttribute('aria-disabled', 'true');
+    }
+    if(newChatBtn){
+      newChatBtn.disabled = true;
+    }
+
     if(!isRetry){
       addMessage(state, messagesEl, 'user', text);
       persistHistorySnapshot(state);
-      inputEl.value = '';
+      if(inputEl){
+        inputEl.value = '';
+      }
+    }
+
+    if(messagesEl){
+      messagesEl.scrollTop = messagesEl.scrollHeight;
     }
     const history = buildMessageWindow(state.messages, { limit: MAX_HISTORY });
     const uniqueDocIds = selectDocIds(state.docs);
@@ -127,10 +144,6 @@ export function createChatController({ state, config, elements }){
     };
     addMessage(state, messagesEl, 'assistant', '', { loading: true });
     state.streaming = true;
-    sendBtn.disabled = true;
-    if(newChatBtn){
-      newChatBtn.disabled = true;
-    }
 
     const targetWebhook = normalizeWebhookUrl(config.N8N_WEBHOOK);
     const useDemo = !targetWebhook;
@@ -238,10 +251,22 @@ export function createChatController({ state, config, elements }){
         });
       }
     }finally{
+      state.sending = false;
       state.streaming = false;
-      sendBtn.disabled = !(state.prechat && state.prechat.ready);
+      const composerReady = Boolean(state.prechat && state.prechat.ready);
+      sendBtn.disabled = !composerReady;
+      if(inputEl){
+        inputEl.disabled = !composerReady;
+        inputEl.setAttribute('aria-disabled', String(!composerReady));
+        if(composerReady){
+          inputEl.focus();
+        }
+      }
       if(newChatBtn){
         newChatBtn.disabled = false;
+      }
+      if(messagesEl){
+        messagesEl.scrollTop = messagesEl.scrollHeight;
       }
       persistHistorySnapshot(state);
     }

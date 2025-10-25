@@ -54,11 +54,13 @@ export function restoreChatState(state){
   try{
     const raw = localStorage.getItem(CHAT_KEY);
     if(!raw){
+      state.sending = false;
       state.streaming = false;
       return { restored: false };
     }
     const dump = JSON.parse(raw);
     if(!dump){
+      state.sending = false;
       state.streaming = false;
       return { restored: false };
     }
@@ -72,6 +74,7 @@ export function restoreChatState(state){
     if(restoredMessages.length){
       state.messages = restoredMessages;
     }
+    state.sending = false;
     state.streaming = false;
     return {
       restored: restoredMessages.length > 0,
@@ -80,6 +83,7 @@ export function restoreChatState(state){
     };
   }catch{
     resetConversation();
+    state.sending = false;
     state.streaming = false;
     return {
       restored: false,
