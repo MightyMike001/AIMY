@@ -1,5 +1,6 @@
 import { CONFIG_KEY } from './constants.js';
 import { sanitizeHeaderValue, safeStringify } from './utils/security.js';
+import { createFocusTrap, setAriaPressed } from '../js/a11y.js';
 
 const SAVE_DEBOUNCE_MS = 500;
 const SAVE_FEEDBACK_MS = 2000;
@@ -46,6 +47,14 @@ export function initSettings({
   }
 
   const modalCard = settingsModal.querySelector('.modal-card');
+  const focusTrap = createFocusTrap(settingsModal, {
+    initialFocus(focusable){
+      if(closeSettingsBtn && settingsModal.contains(closeSettingsBtn)){
+        return closeSettingsBtn;
+      }
+      return Array.isArray(focusable) && focusable.length > 0 ? focusable[0] : null;
+    }
+  });
   let feedbackTimer = null;
   let saveTimer = null;
 
@@ -63,6 +72,10 @@ export function initSettings({
   }
 
   const storedSettings = readSettingsSnapshot();
+
+  if(settingsBtn){
+    setAriaPressed(settingsBtn, false);
+  }
 
   if(webhookInput){
     const initialWebhook = typeof storedSettings.N8N_WEBHOOK === 'string' ? storedSettings.N8N_WEBHOOK : '';
@@ -184,15 +197,33 @@ export function initSettings({
     });
   }
 
+  const isOpen = () => settingsModal.getAttribute('aria-hidden') === 'false';
+
   const open = () => {
+    if(isOpen()){
+      return;
+    }
     settingsModal.setAttribute('aria-hidden', 'false');
+    setAriaPressed(settingsBtn, true);
+    focusTrap.activate();
   };
 
   const close = () => {
+    if(!isOpen()){
+      return;
+    }
     settingsModal.setAttribute('aria-hidden', 'true');
+    setAriaPressed(settingsBtn, false);
+    focusTrap.deactivate();
   };
 
-  settingsBtn?.addEventListener('click', open);
+  settingsBtn?.addEventListener('click', () => {
+    if(isOpen()){
+      close();
+    }else{
+      open();
+    }
+  });
   closeSettingsBtn?.addEventListener('click', close);
 
   settingsModal.addEventListener('click', (e) => {
@@ -202,7 +233,8 @@ export function initSettings({
   });
 
   document.addEventListener('keydown', (e) => {
-    if(e.key === 'Escape' && settingsModal.getAttribute('aria-hidden') === 'false'){
+    if(e.key === 'Escape' && isOpen()){
+      e.preventDefault();
       close();
     }
   });

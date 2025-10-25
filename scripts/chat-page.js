@@ -588,8 +588,9 @@ if(elements.sendBtn){
 }
 
 if(elements.inputEl){
+  elements.inputEl.setAttribute('aria-multiline', 'true');
   elements.inputEl.addEventListener('keydown', (e) => {
-    if(e.key === 'Enter' && !e.shiftKey){
+    if(e.key === 'Enter' && !e.shiftKey && !e.isComposing){
       e.preventDefault();
       chat.send();
     }
