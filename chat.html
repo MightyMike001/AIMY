@@ -59,7 +59,16 @@
           </div>
           <div class="app-actions">
             <a class="btn btn-ghost btn-small" href="history.html">Chatgeschiedenis</a>
-            <button id="settingsBtn" class="btn btn-ghost btn-small" type="button">Instellingen</button>
+            <button
+              id="settingsBtn"
+              class="btn btn-ghost btn-small"
+              type="button"
+              aria-haspopup="dialog"
+              aria-controls="settingsModal"
+              aria-pressed="false"
+            >
+              Instellingen
+            </button>
             <div class="chat-status" role="status" aria-live="polite">
               <span id="ingestStatus" class="badge">Docs: 0</span>
               <span id="testBadge" class="badge">Tests: 0/0</span>
@@ -111,6 +120,7 @@
               placeholder="Beschrijf de storing… (bijv. Linde E20 toont foutcode 224-01 na koude start)"
               rows="1"
               aria-label="Bericht aan AIMY"
+              aria-multiline="true"
             ></textarea>
             <button id="send" class="btn btn-primary" type="button">Stuur</button>
           </div>

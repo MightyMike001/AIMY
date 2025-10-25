@@ -318,9 +318,8 @@ function showToast(variant, message){
   }
   const toast = document.createElement('div');
   toast.className = `toast toast-${variant}`;
-  const role = variant === 'error' ? 'alert' : 'status';
   const ariaLive = variant === 'error' ? 'assertive' : 'polite';
-  toast.setAttribute('role', role);
+  toast.setAttribute('role', 'status');
   toast.setAttribute('aria-live', ariaLive);
 
   const text = document.createElement('p');
