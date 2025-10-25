@@ -23,6 +23,7 @@ export function getElements(){
     bannerInfo: $('#banner-info'),
     bannerSerial: $('#bannerSerial'),
     bannerHours: $('#bannerHours'),
-    bannerFaults: $('#bannerFaults')
+    bannerFaults: $('#bannerFaults'),
+    bannerSession: $('#bannerSession')
   };
 }
