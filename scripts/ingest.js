@@ -10,6 +10,7 @@ import {
   deriveTypeLabel,
   getExtension
 } from '../js/docs.js';
+import { maxFiles } from '../js/config.js';
 
 function normalizeDocId(value){
   if(typeof value === 'string' && value.trim()){
@@ -143,6 +144,7 @@ export function renderDocList(state, docListEl, ingestBadge, testBadge = null){
 export function setupIngest({ state, dropEl, fileInput, docListEl, ingestBadge, testBadge, onUploadsChange }){
   const uploads = [];
   const notifyUploadsChange = typeof onUploadsChange === 'function' ? onUploadsChange : () => {};
+  const MAX_FILES = Number.isInteger(maxFiles) && maxFiles > 0 ? maxFiles : Infinity;
 
   if(!Array.isArray(state.docs)){
     state.docs = [];
@@ -171,6 +173,20 @@ export function setupIngest({ state, dropEl, fileInput, docListEl, ingestBadge, 
 
   function renderUploads(){
     renderList({ uploads, docListEl, ingestBadge, testBadge, removeUpload });
+    const atLimit = uploads.length >= MAX_FILES;
+    if(fileInput){
+      fileInput.disabled = atLimit;
+      fileInput.setAttribute('aria-disabled', String(atLimit));
+    }
+    if(dropEl){
+      dropEl.classList.toggle('is-disabled', atLimit);
+      dropEl.setAttribute('aria-disabled', String(atLimit));
+      if(Number.isFinite(MAX_FILES)){
+        dropEl.dataset.maxFiles = String(MAX_FILES);
+      }else{
+        delete dropEl.dataset.maxFiles;
+      }
+    }
     notifyUploadsChange();
   }
 
@@ -274,7 +290,16 @@ export function setupIngest({ state, dropEl, fileInput, docListEl, ingestBadge, 
       setDropHighlight(false);
       return;
     }
-    for(const file of files){
+    const remainingSlots = MAX_FILES - uploads.length;
+    if(remainingSlots <= 0){
+      setDropHighlight(false);
+      return;
+    }
+    const limitedFiles = Number.isFinite(MAX_FILES) ? files.slice(0, remainingSlots) : files;
+    if(limitedFiles.length < files.length){
+      console.warn('Maximum number of uploads reached. Ignoring extra files.');
+    }
+    for(const file of limitedFiles){
       const { entry, validation } = queueFile(file);
       if(validation.ok){
         await processUpload(entry, file);

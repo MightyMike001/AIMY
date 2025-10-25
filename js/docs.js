@@ -3,6 +3,7 @@
  * De functies in dit bestand zijn bewust frameworkloos gehouden zodat ze
  * eenvoudig in vanilla-omgevingen te gebruiken zijn.
  */
+import { allowedTypes } from './config.js';
 
 export const DOC_STATUS = Object.freeze({
   QUEUED: 'queued',
@@ -25,12 +26,9 @@ export const STATUS_TONES = Object.freeze({
   [DOC_STATUS.FAIL]: 'error'
 });
 
-export const ALLOWED_EXTENSIONS = new Map([
-  ['pdf', 'PDF'],
-  ['png', 'PNG'],
-  ['jpg', 'JPG'],
-  ['jpeg', 'JPEG']
-]);
+const ALLOWED_TYPES = Array.isArray(allowedTypes) ? allowedTypes : [];
+
+export const ALLOWED_EXTENSIONS = new Map(ALLOWED_TYPES);
 
 export const MAX_FILE_SIZE_BYTES = 15 * 1024 * 1024; // 15 MB
 
