@@ -1,5 +1,5 @@
 import { GREETING, MAX_HISTORY, STREAM_DELAY_MS } from './constants.js';
-import { addMessage, appendStreamChunk, updateLastAssistantCitations } from './messages.js';
+import { addMessage, appendStreamChunk, finalizeAssistantMessage, updateLastAssistantCitations } from './messages.js';
 import { resetConversation } from './state.js';
 import { clearChatStorage, persistHistorySnapshot } from './storage.js';
 import { normalizeWebhookUrl, safeStringify } from './utils/security.js';
@@ -233,12 +233,14 @@ export function createChatController({ state, config, elements }){
         // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, STREAM_DELAY_MS));
       }
+      finalizeAssistantMessage(state, messagesEl);
       updateLastAssistantCitations(state, messagesEl, data?.citations);
     }catch(err){
       const aborted = err?.name === 'AbortError' || err?.name === 'TimeoutError';
       console.error('chat:send failed', { error: err?.message, aborted });
       if(useDemo){
         appendStreamChunk(state, messagesEl, '\n[!] Demo-antwoord kon niet worden weergegeven.');
+        finalizeAssistantMessage(state, messagesEl);
       }else{
         const retryMessage = aborted
           ? 'Timeout: geen antwoord ontvangen van de webhook. Controleer je verbinding en probeer het opnieuw.'
