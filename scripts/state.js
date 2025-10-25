@@ -1,12 +1,12 @@
 import { GREETING } from './constants.js';
-import { safeRandomId } from './utils/random.js';
+import { createSessionId } from '../js/session.js';
 
 export const state = {
   docs: [],
   messages: [
     { role: 'assistant', content: GREETING }
   ],
-  chatId: safeRandomId('chat'),
+  chatId: createSessionId(),
   streaming: false,
   prechat: {
     serialNumber: '',
@@ -20,7 +20,7 @@ export const state = {
 };
 
 export function resetConversation(){
-  state.chatId = safeRandomId('chat');
+  state.chatId = createSessionId(state.prechat?.serialNumber);
   state.messages = [
     { role: 'assistant', content: GREETING }
   ];

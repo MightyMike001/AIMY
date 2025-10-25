@@ -10,9 +10,10 @@ import { createChatController } from './chat.js';
 import { setupPersistence, restoreChatState, persistHistorySnapshot } from './storage.js';
 import { runTests } from './tests.js';
 import { fmtBytes } from './utils/format.js';
-import { loadPrechat } from './prechat-storage.js';
+import { loadPrechat, savePrechat } from './prechat-storage.js';
 import { initViewportObserver } from './utils/viewport.js';
 import { normalizeWebhookUrl, sanitizeHeaderValue } from './utils/security.js';
+import { createSessionContext, createSessionId, sanitizeSessionPayload } from '../js/session.js';
 
 const WEBHOOK_PING_TIMEOUT_MS = 5000;
 const WEBHOOK_STATUS_STATES = {
@@ -99,6 +100,7 @@ export async function pingEndpoint(url, token, headerName = 'X-AIMY-Token'){
 
 const config = loadConfig();
 const elements = getElements();
+const sessionContext = createSessionContext({ search: window.location.search });
 const defaultPlaceholder = elements.inputEl ? elements.inputEl.getAttribute('placeholder') || '' : '';
 const PRECHAT_DISABLED_PLACEHOLDER = 'Open AIMY via de startpagina en vul de werkbongegevens in.';
 const BANNER_FAULTS_EMPTY = 'Geen foutcodes opgegeven';
@@ -248,16 +250,47 @@ applyComposerAvailability(false);
 hydratePrechatState();
 
 function hydratePrechatState(){
-  const stored = loadPrechat();
-  if(!stored || !stored.serialNumber || !stored.hours){
+  const storedRaw = loadPrechat();
+  const stored = storedRaw ? sanitizeSessionPayload(storedRaw) : null;
+
+  let serial = stored?.serialNumber || '';
+  let hours = stored?.hours || '';
+  let faults = stored?.faultCodes || '';
+
+  if(sessionContext.hasParams){
+    const override = sanitizeSessionPayload({
+      serialNumber: sessionContext.serialNumber,
+      hours: sessionContext.hours,
+      faultCodes: sessionContext.faultCodes
+    });
+    if(override.serialNumber){
+      serial = override.serialNumber;
+    }
+    if(override.hours){
+      hours = override.hours;
+    }
+    if(typeof override.faultCodes === 'string'){
+      faults = override.faultCodes;
+    }
+    if(serial || hours || faults){
+      savePrechat({ serialNumber: serial, hours, faultCodes: faults });
+    }
+  }
+
+  if(!serial || !hours){
     window.location.replace('prechat.html');
     return;
   }
 
+  const sessionId = sessionContext.hasParams && sessionContext.serialNumber
+    ? sessionContext.sessionId
+    : createSessionId(serial);
+
+  state.chatId = sessionId;
   state.prechat = {
-    serialNumber: stored.serialNumber || '',
-    hours: stored.hours || '',
-    faultCodes: stored.faultCodes || '',
+    serialNumber: serial,
+    hours,
+    faultCodes: faults,
     ready: true,
     completed: true,
     valid: true,
@@ -285,10 +318,10 @@ function renderPrechatSummary(){
     hours: '',
     faultCodes: ''
   };
-  updateBannerInfo(prechat);
+  updateBannerInfo(prechat, state.chatId);
 }
 
-function updateBannerInfo(source){
+function updateBannerInfo(source, sessionId){
   if(!elements.bannerInfo || !elements.bannerSerial || !elements.bannerHours || !elements.bannerFaults){
     return;
   }
@@ -298,7 +331,8 @@ function updateBannerInfo(source){
   const serialText = serial || '—';
   const hoursText = hours || '—';
   const faultsText = faults || BANNER_FAULTS_EMPTY;
-  const bannerText = `${serialText}|${hoursText}|${faultsText}`;
+  const sessionText = sanitizeSessionValue(sessionId) || '—';
+  const bannerText = `${serialText}|${hoursText}|${faultsText}|${sessionText}`;
   if(bannerText === lastBannerText){
     return;
   }
@@ -307,6 +341,9 @@ function updateBannerInfo(source){
   elements.bannerHours.textContent = hoursText;
   elements.bannerFaults.textContent = faultsText;
   elements.bannerFaults.classList.toggle('empty', !faults);
+  if(elements.bannerSession){
+    elements.bannerSession.textContent = sessionText;
+  }
   triggerBannerAnimation();
 }
 
@@ -343,6 +380,13 @@ function sanitizeFaultValue(value){
     return '';
   }
   return cleaned.toLowerCase() === BANNER_FAULTS_EMPTY.toLowerCase() ? '' : cleaned;
+}
+
+function sanitizeSessionValue(value){
+  if(typeof value !== 'string'){
+    return '';
+  }
+  return value.trim();
 }
 
 function sharePrechatIntro(){
@@ -488,9 +532,10 @@ function syncPrechatFromStorage(){
   if(!stored){
     return;
   }
-  const serial = stored.serialNumber || '';
-  const hours = stored.hours || '';
-  const faults = stored.faultCodes || '';
+  const sanitized = sanitizeSessionPayload(stored);
+  const serial = sanitized.serialNumber || '';
+  const hours = sanitized.hours || '';
+  const faults = sanitized.faultCodes || '';
   const ready = Boolean(serial && hours);
   const prechat = state.prechat;
   const changed =
@@ -518,6 +563,11 @@ function syncPrechatFromStorage(){
     state.prechat.ready = ready;
     state.prechat.completed = state.prechat.ready;
     state.prechat.valid = state.prechat.ready;
+  }
+  if(ready){
+    state.chatId = createSessionId(serial);
+  }else if(!state.chatId){
+    state.chatId = createSessionId();
   }
   applyComposerAvailability(ready);
   renderPrechatSummary();
