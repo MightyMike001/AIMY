@@ -432,7 +432,8 @@ setupIngest({
   dropEl: elements.drop,
   fileInput: elements.fileInput,
   docListEl: elements.docList,
-  ingestBadge: elements.ingestBadge
+  ingestBadge: elements.ingestBadge,
+  testBadge: elements.testBadge
 });
 
 if(webhookStatusEl){

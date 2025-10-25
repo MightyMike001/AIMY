@@ -1,28 +1,15 @@
 import { fmtBytes } from './utils/format.js';
 import { safeRandomId } from './utils/random.js';
-
-const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25 MB
-const ALLOWED_EXTENSIONS = new Set(['pdf', 'txt', 'doc', 'docx', 'md', 'html', 'json', 'csv']);
-const CONTROL_CHARS_PATTERN = /[\u0000-\u001F\u007F]/g;
-const MAX_NAME_LENGTH = 120;
-
-function sanitizeFileName(name){
-  if(typeof name !== 'string'){
-    return 'document';
-  }
-  const cleaned = name.replace(CONTROL_CHARS_PATTERN, '').trim();
-  if(!cleaned){
-    return 'document';
-  }
-  if(cleaned.length <= MAX_NAME_LENGTH){
-    return cleaned;
-  }
-  const lastDot = cleaned.lastIndexOf('.');
-  const extension = lastDot > 0 && lastDot < cleaned.length - 1 ? cleaned.slice(lastDot) : '';
-  const baseLength = Math.max(1, MAX_NAME_LENGTH - extension.length);
-  const base = cleaned.slice(0, baseLength).trimEnd();
-  return `${base}${extension}` || 'document';
-}
+import {
+  DOC_STATUS,
+  sanitizeFileName,
+  validateFile,
+  describeValidationError,
+  getStatusPresentation,
+  computeUploadCounters,
+  deriveTypeLabel,
+  getExtension
+} from '../js/docs.js';
 
 function normalizeDocId(value){
   if(typeof value === 'string' && value.trim()){
@@ -31,7 +18,17 @@ function normalizeDocId(value){
   return safeRandomId('doc');
 }
 
-function createDocElement(doc, state, render){
+function updateBadges(uploads, ingestBadge, testBadge){
+  const { docs, processed, success } = computeUploadCounters(uploads);
+  if(ingestBadge){
+    ingestBadge.textContent = `Docs: ${docs}`;
+  }
+  if(testBadge){
+    testBadge.textContent = `Tests: ${processed}/${success}`;
+  }
+}
+
+function createDocElement(upload, removeUpload){
   const el = document.createElement('div');
   el.className = 'doc';
 
@@ -44,134 +41,230 @@ function createDocElement(doc, state, render){
 
   const name = document.createElement('div');
   name.className = 'name';
-  name.textContent = doc.name;
+  name.textContent = upload.name;
   meta.appendChild(name);
 
-  const metaDetails = document.createElement('div');
-  metaDetails.className = 'small';
-  metaDetails.textContent = `${fmtBytes(doc.size)} • ${new Date(doc.uploadedAt).toLocaleString()}`;
-  meta.appendChild(metaDetails);
+  const details = document.createElement('div');
+  details.className = 'small';
+  const typeLabel = upload.typeLabel || deriveTypeLabel(upload.name);
+  details.textContent = `${typeLabel} • ${fmtBytes(upload.size)}`;
+  meta.appendChild(details);
 
   el.appendChild(meta);
 
+  const statusBadge = document.createElement('span');
+  statusBadge.className = 'badge doc-status';
+  const { text, tone } = getStatusPresentation(upload.status, { error: upload.error });
+  statusBadge.textContent = text;
+  if(tone){
+    statusBadge.dataset.tone = tone;
+  }
+  if(upload.status === DOC_STATUS.FAIL && upload.error){
+    statusBadge.title = upload.error;
+  }
+  if(upload.status === DOC_STATUS.PROCESSING){
+    statusBadge.setAttribute('aria-live', 'polite');
+  }
+  el.appendChild(statusBadge);
+
   const button = document.createElement('button');
   button.type = 'button';
-  button.dataset.id = doc.id;
+  button.dataset.id = upload.id;
   button.title = 'Verwijderen';
   button.textContent = 'Verwijder';
-  button.addEventListener('click', async (ev) => {
-    const id = ev.currentTarget.getAttribute('data-id');
-    if(!id){
-      return;
-    }
-    try{
-      await fetch(`/api/docs/${encodeURIComponent(id)}`, { method: 'DELETE' });
-    }catch{
-      /* optioneel offline */
-    }
-    state.docs = state.docs.filter(x => x.id !== id);
-    render();
+  button.disabled = upload.status === DOC_STATUS.PROCESSING;
+  button.addEventListener('click', async () => {
+    await removeUpload(upload);
   });
 
   el.appendChild(button);
   return el;
 }
 
-export function renderDocList(state, docListEl, ingestBadge){
+function renderList({ uploads, docListEl, ingestBadge, testBadge, removeUpload }){
+  updateBadges(uploads, ingestBadge, testBadge);
   if(!docListEl){
     return;
   }
-  if(ingestBadge){
-    ingestBadge.textContent = `Docs: ${state.docs.length}`;
-  }
-  if(!state.docs.length){
-    docListEl.textContent = '';
+  docListEl.textContent = '';
+  if(!uploads.length){
     const empty = document.createElement('div');
     empty.className = 'hint';
     empty.textContent = 'Nog niets geladen';
     docListEl.appendChild(empty);
     return;
   }
-  docListEl.textContent = '';
   const fragment = document.createDocumentFragment();
-  state.docs.forEach(doc => {
-    const el = createDocElement(doc, state, () => renderDocList(state, docListEl, ingestBadge));
-    fragment.appendChild(el);
+  uploads.forEach((upload) => {
+    fragment.appendChild(createDocElement(upload, removeUpload));
   });
   docListEl.appendChild(fragment);
 }
 
-async function uploadDoc(state, file){
-  if(file.size > MAX_FILE_SIZE){
-    console.warn('Bestand te groot om te uploaden', { name: file.name, size: file.size });
-    return;
-  }
+export function renderDocList(state, docListEl, ingestBadge, testBadge = null){
+  const uploads = Array.isArray(state.docs)
+    ? state.docs.map((doc) => {
+        const name = typeof doc?.name === 'string' && doc.name ? doc.name : 'document';
+        const size = Number.isFinite(doc?.size) ? doc.size : 0;
+        const uploadedAt = Number.isFinite(doc?.uploadedAt) ? doc.uploadedAt : Date.now();
+        const docId = typeof doc?.id === 'string' && doc.id ? doc.id : safeRandomId('doc');
+        const typeLabel = doc?.type || deriveTypeLabel(name);
+        const extension = doc?.extension || getExtension(name);
+        return {
+          id: docId,
+          docId,
+          name,
+          size,
+          uploadedAt,
+          status: DOC_STATUS.OK,
+          error: null,
+          typeLabel,
+          extension
+        };
+      })
+    : [];
 
-  const extension = (file.name.split('.').pop() || '').toLowerCase();
-  if(extension && !ALLOWED_EXTENSIONS.has(extension)){
-    console.warn('Bestandstype niet toegestaan', { name: file.name });
-    return;
-  }
-
-  const form = new FormData();
-  form.append('file', file);
-  const doc = {
-    id: safeRandomId('doc'),
-    name: sanitizeFileName(file.name),
-    size: file.size,
-    uploadedAt: Date.now()
-  };
-  try{
-    const res = await fetch('/api/ingest', { method: 'POST', body: form });
-    if(res.ok){
-      const data = await res.json();
-      if(data && data.doc_id){
-        doc.id = normalizeDocId(data.doc_id);
-      }
+  async function removeUpload(upload){
+    if(!upload?.docId){
+      return;
     }
-  }catch{
-    /* optioneel offline */
+    try{
+      await fetch(`/api/docs/${encodeURIComponent(upload.docId)}`, { method: 'DELETE' });
+    }catch{
+      /* optioneel offline */
+    }
+    state.docs = state.docs.filter((doc) => doc.id !== upload.docId);
+    renderDocList(state, docListEl, ingestBadge, testBadge);
   }
-  const existingIndex = state.docs.findIndex(existing => existing.id === doc.id);
-  if(existingIndex > -1){
-    state.docs[existingIndex] = doc;
-  }else{
-    state.docs.push(doc);
-  }
+
+  renderList({ uploads, docListEl, ingestBadge, testBadge, removeUpload });
 }
 
-export function setupIngest({ state, dropEl, fileInput, docListEl, ingestBadge }){
-  const render = () => renderDocList(state, docListEl, ingestBadge);
-  render();
+export function setupIngest({ state, dropEl, fileInput, docListEl, ingestBadge, testBadge }){
+  const uploads = [];
 
-  if(!dropEl || !fileInput){
-    return { render };
+  if(!Array.isArray(state.docs)){
+    state.docs = [];
   }
 
-  function preventDefaults(e){
-    e.preventDefault();
-    e.stopPropagation();
+  state.docs = state.docs.map((doc) => {
+    const name = sanitizeFileName(doc?.name || 'document');
+    const size = Number.isFinite(doc?.size) ? doc.size : 0;
+    const uploadedAt = Number.isFinite(doc?.uploadedAt) ? doc.uploadedAt : Date.now();
+    const id = typeof doc?.id === 'string' && doc.id ? doc.id : safeRandomId('doc');
+    const typeLabel = doc?.type || deriveTypeLabel(name);
+    const extension = doc?.extension || getExtension(name);
+    uploads.push({
+      id: safeRandomId('upload'),
+      docId: id,
+      name,
+      size,
+      uploadedAt,
+      status: DOC_STATUS.OK,
+      error: null,
+      typeLabel,
+      extension
+    });
+    return { id, name, size, uploadedAt, type: typeLabel, extension };
+  });
+
+  function renderUploads(){
+    renderList({ uploads, docListEl, ingestBadge, testBadge, removeUpload });
   }
 
-  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-    dropEl.addEventListener(eventName, preventDefaults, false);
-  });
+  async function removeUpload(upload){
+    const index = uploads.findIndex((item) => item.id === upload.id);
+    if(index === -1){
+      return;
+    }
+    uploads.splice(index, 1);
+    if(upload.docId){
+      state.docs = state.docs.filter((doc) => doc.id !== upload.docId);
+      try{
+        await fetch(`/api/docs/${encodeURIComponent(upload.docId)}`, { method: 'DELETE' });
+      }catch{
+        /* optioneel offline */
+      }
+    }
+    renderUploads();
+  }
 
-  const setDropHighlight = (active) => {
-    dropEl.classList.toggle('is-dragover', Boolean(active));
-  };
+  async function processUpload(entry, file){
+    entry.status = DOC_STATUS.PROCESSING;
+    entry.error = null;
+    renderUploads();
 
-  ['dragenter', 'dragover'].forEach(eventName => {
-    dropEl.addEventListener(eventName, () => setDropHighlight(true));
-  });
+    const form = new FormData();
+    form.append('file', file, entry.name);
+    if(state.chatId){
+      form.append('sessionId', state.chatId);
+    }
 
-  ['dragleave', 'drop', 'dragend'].forEach(eventName => {
-    dropEl.addEventListener(eventName, () => setDropHighlight(false));
-  });
+    try{
+      const res = await fetch('/api/ingest', { method: 'POST', body: form });
+      if(res && res.ok){
+        let data = null;
+        try{
+          data = await res.json();
+        }catch{
+          data = null;
+        }
+        const docId = normalizeDocId(data?.doc_id || data?.id || entry.docId);
+        entry.docId = docId;
+        entry.status = DOC_STATUS.OK;
+        entry.error = null;
+        entry.uploadedAt = Date.now();
 
-  dropEl.addEventListener('click', () => fileInput.click());
-  dropEl.addEventListener('drop', (e) => handleFiles(e.dataTransfer.files));
-  fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+        const docRecord = {
+          id: docId,
+          name: entry.name,
+          size: entry.size,
+          uploadedAt: entry.uploadedAt,
+          type: entry.typeLabel,
+          extension: entry.extension
+        };
+        const existingIndex = state.docs.findIndex((doc) => doc.id === docId);
+        if(existingIndex > -1){
+          state.docs[existingIndex] = docRecord;
+        }else{
+          state.docs.push(docRecord);
+        }
+      }else{
+        entry.status = DOC_STATUS.FAIL;
+        entry.error = res ? `HTTP ${res.status}` : 'Upload mislukt';
+        entry.docId = null;
+      }
+    }catch{
+      entry.status = DOC_STATUS.FAIL;
+      entry.error = 'Netwerkfout';
+      entry.docId = null;
+    }
+
+    if(entry.status !== DOC_STATUS.OK){
+      state.docs = state.docs.filter((doc) => doc.id !== entry.docId);
+    }
+
+    renderUploads();
+  }
+
+  function queueFile(file){
+    const validation = validateFile(file);
+    const name = sanitizeFileName(file.name);
+    const entry = {
+      id: safeRandomId('upload'),
+      docId: null,
+      name,
+      size: file.size,
+      uploadedAt: Date.now(),
+      status: validation.ok ? DOC_STATUS.QUEUED : DOC_STATUS.FAIL,
+      error: validation.ok ? null : describeValidationError(validation.error),
+      typeLabel: validation.ok ? validation.typeLabel : deriveTypeLabel(name),
+      extension: validation.extension || getExtension(name)
+    };
+    uploads.push(entry);
+    renderUploads();
+    return { entry, validation };
+  }
 
   async function handleFiles(fileList){
     const files = Array.from(fileList).filter((item) => item instanceof File);
@@ -180,11 +273,49 @@ export function setupIngest({ state, dropEl, fileInput, docListEl, ingestBadge }
       return;
     }
     for(const file of files){
-      await uploadDoc(state, file);
+      const { entry, validation } = queueFile(file);
+      if(validation.ok){
+        await processUpload(entry, file);
+      }
     }
     setDropHighlight(false);
-    render();
+    if(fileInput){
+      fileInput.value = '';
+    }
   }
 
-  return { render };
+  function setDropHighlight(active){
+    if(dropEl){
+      dropEl.classList.toggle('is-dragover', Boolean(active));
+    }
+  }
+
+  renderUploads();
+
+  if(!dropEl || !fileInput){
+    return { render: renderUploads };
+  }
+
+  function preventDefaults(event){
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach((eventName) => {
+    dropEl.addEventListener(eventName, preventDefaults, false);
+  });
+
+  ['dragenter', 'dragover'].forEach((eventName) => {
+    dropEl.addEventListener(eventName, () => setDropHighlight(true));
+  });
+
+  ['dragleave', 'drop', 'dragend'].forEach((eventName) => {
+    dropEl.addEventListener(eventName, () => setDropHighlight(false));
+  });
+
+  dropEl.addEventListener('click', () => fileInput.click());
+  dropEl.addEventListener('drop', (event) => handleFiles(event.dataTransfer.files));
+  fileInput.addEventListener('change', (event) => handleFiles(event.target.files));
+
+  return { render: renderUploads };
 }

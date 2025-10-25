@@ -380,6 +380,11 @@ body.app-page .page-shell {
   color: var(--text-dim);
 }
 
+.doc .badge.doc-status {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 .doc button {
   border: none;
   background: rgba(255, 255, 255, 0.08);
