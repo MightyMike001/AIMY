@@ -1,4 +1,5 @@
 import { MAX_MESSAGES } from './constants.js';
+import { normalizeCitations } from './utils/history.js';
 
 const streamTextNodes = new WeakMap();
 const scheduledScrolls = new WeakMap();
@@ -51,6 +52,87 @@ function scheduleScroll(container){
   });
 }
 
+function syncCitationAria(aside){
+  if(!aside || typeof document === 'undefined'){
+    return;
+  }
+  const shouldHide = document.body?.classList?.contains('citations-hidden');
+  if(shouldHide){
+    aside.setAttribute('aria-hidden', 'true');
+    aside.setAttribute('hidden', '');
+  }else{
+    aside.setAttribute('aria-hidden', 'false');
+    aside.removeAttribute('hidden');
+  }
+}
+
+function createCitationList(citations){
+  const list = document.createElement('ul');
+  list.className = 'citations-list';
+  citations.forEach((item) => {
+    const entry = document.createElement('li');
+    const parts = [`Doc ${item.docId}`];
+    if(item.section){
+      parts.push(`§${item.section}`);
+    }
+    entry.textContent = `[${parts.join(', ')}]`;
+    list.appendChild(entry);
+  });
+  return list;
+}
+
+function renderBubbleCitations(bubble, citations){
+  if(!bubble){
+    return null;
+  }
+  const normalized = normalizeCitations(citations);
+  let aside = bubble.querySelector('aside.citations');
+  if(!normalized.length){
+    if(aside){
+      aside.remove();
+    }
+    return null;
+  }
+
+  if(!aside){
+    aside = document.createElement('aside');
+    aside.className = 'citations';
+    bubble.appendChild(aside);
+  }else{
+    aside.innerHTML = '';
+  }
+
+  aside.appendChild(createCitationList(normalized));
+  syncCitationAria(aside);
+  return aside;
+}
+
+function findLastAssistantIndex(messages){
+  if(!Array.isArray(messages)){
+    return -1;
+  }
+  for(let i = messages.length - 1; i >= 0; i -= 1){
+    if(messages[i]?.role === 'assistant'){
+      return i;
+    }
+  }
+  return -1;
+}
+
+function findLastAssistantBubble(messagesEl){
+  if(!messagesEl){
+    return null;
+  }
+  let node = messagesEl.lastElementChild;
+  while(node){
+    if(node.classList?.contains('assistant')){
+      return node;
+    }
+    node = node.previousElementSibling;
+  }
+  return null;
+}
+
 function appendLoader(contentEl){
   if(!contentEl){
     return;
@@ -67,8 +149,9 @@ function normalizeRole(role){
 }
 
 export function addMessage(state, messagesEl, role, content, options = {}){
-  const { track = true, scroll = true, loading = false } = options;
+  const { track = true, scroll = true, loading = false, citations } = options;
   const normalizedRole = normalizeRole(role);
+  const normalizedCitations = normalizedRole === 'assistant' ? normalizeCitations(citations) : [];
   const bubble = document.createElement('div');
   bubble.className = `bubble ${normalizedRole}`;
 
@@ -87,17 +170,26 @@ export function addMessage(state, messagesEl, role, content, options = {}){
   }
   bubble.appendChild(contentEl);
 
+  if(!loading && normalizedRole === 'assistant'){
+    renderBubbleCitations(bubble, normalizedCitations);
+  }
+
   messagesEl.appendChild(bubble);
   if(scroll){
     scheduleScroll(messagesEl);
   }
 
   if(track){
-    state.messages.push({ role: normalizedRole, content: typeof content === 'string' ? content : '' });
+    state.messages.push({
+      role: normalizedRole,
+      content: typeof content === 'string' ? content : '',
+      citations: normalizedRole === 'assistant' ? normalizedCitations : []
+    });
     if(state.messages.length > MAX_MESSAGES){
       state.messages.shift();
     }
   }
+  return bubble;
 }
 
 export function appendStreamChunk(state, messagesEl, chunk){
@@ -138,6 +230,24 @@ export function appendStreamChunk(state, messagesEl, chunk){
   }
 }
 
+export function updateLastAssistantCitations(state, messagesEl, citations){
+  const normalized = normalizeCitations(citations);
+
+  if(state?.messages){
+    const lastAssistantIndex = findLastAssistantIndex(state.messages);
+    if(lastAssistantIndex > -1){
+      state.messages[lastAssistantIndex].citations = normalized;
+    }
+  }
+
+  const bubble = findLastAssistantBubble(messagesEl);
+  if(bubble){
+    renderBubbleCitations(bubble, normalized);
+  }
+
+  return normalized;
+}
+
 export function renderMessages(state, messagesEl){
   if(!messagesEl){
     return;
@@ -146,7 +256,8 @@ export function renderMessages(state, messagesEl){
   state.messages.forEach((message) => {
     addMessage(state, messagesEl, message.role, message.content, {
       track: false,
-      scroll: false
+      scroll: false,
+      citations: message.citations
     });
   });
   messagesEl.scrollTop = messagesEl.scrollHeight;

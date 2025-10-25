@@ -115,6 +115,23 @@ let lastPingSnapshot = {
   status: config.N8N_WEBHOOK ? 'idle' : 'empty'
 };
 
+function applyCitationsVisibility(show){
+  if(typeof document === 'undefined' || !document.body){
+    return;
+  }
+  const shouldShow = !!show;
+  document.body.classList.toggle('citations-hidden', !shouldShow);
+  const asides = document.querySelectorAll('aside.citations');
+  asides.forEach((aside) => {
+    aside.setAttribute('aria-hidden', shouldShow ? 'false' : 'true');
+    if(shouldShow){
+      aside.removeAttribute('hidden');
+    }else{
+      aside.setAttribute('hidden', '');
+    }
+  });
+}
+
 function renderWebhookStatus(state){
   if(!webhookStatusEl){
     return;
@@ -451,6 +468,15 @@ initSettings({
   onWebhookCommit: commitWebhookInput,
   onTokenPersist: persistToken
 });
+
+const getCitationsPreference = () => (elements.citationsCheckbox ? elements.citationsCheckbox.checked : false);
+applyCitationsVisibility(getCitationsPreference());
+
+if(elements.citationsCheckbox){
+  elements.citationsCheckbox.addEventListener('change', () => {
+    applyCitationsVisibility(getCitationsPreference());
+  });
+}
 
 const restoreResult = restoreChatState(state);
 

@@ -49,10 +49,48 @@ export function mapDocuments(docs, { now = Date.now(), prefix = DEFAULT_DOC_PREF
   return docs.map((doc) => normalizeDocument(doc, { now, prefix }));
 }
 
+function normalizeCitationEntry(citation){
+  if(!citation || typeof citation !== 'object'){
+    return null;
+  }
+
+  const docIdSource = citation.docId ?? citation.doc_id ?? citation.id ?? citation.documentId;
+  let docId = null;
+  if(typeof docIdSource === 'string'){
+    docId = docIdSource.trim();
+  }else if(typeof docIdSource === 'number' && Number.isFinite(docIdSource)){
+    docId = String(docIdSource);
+  }
+
+  if(!docId){
+    return null;
+  }
+
+  const sectionSource = citation.section ?? citation.page ?? citation.sectionId ?? citation.location;
+  let section = null;
+  if(typeof sectionSource === 'string'){
+    section = sectionSource.trim();
+  }else if(typeof sectionSource === 'number' && Number.isFinite(sectionSource)){
+    section = String(sectionSource);
+  }
+
+  return section ? { docId, section } : { docId };
+}
+
+export function normalizeCitations(list){
+  if(!Array.isArray(list)){
+    return [];
+  }
+  return list
+    .map(normalizeCitationEntry)
+    .filter(Boolean);
+}
+
 function normalizeMessage(message){
   const role = message?.role === 'user' ? 'user' : 'assistant';
   const content = typeof message?.content === 'string' ? message.content : '';
-  return { role, content };
+  const citations = normalizeCitations(message?.citations);
+  return { role, content, citations };
 }
 
 export function mapMessages(messages, { limit } = {}){
