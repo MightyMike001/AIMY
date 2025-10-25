@@ -140,8 +140,9 @@ export function renderDocList(state, docListEl, ingestBadge, testBadge = null){
   renderList({ uploads, docListEl, ingestBadge, testBadge, removeUpload });
 }
 
-export function setupIngest({ state, dropEl, fileInput, docListEl, ingestBadge, testBadge }){
+export function setupIngest({ state, dropEl, fileInput, docListEl, ingestBadge, testBadge, onUploadsChange }){
   const uploads = [];
+  const notifyUploadsChange = typeof onUploadsChange === 'function' ? onUploadsChange : () => {};
 
   if(!Array.isArray(state.docs)){
     state.docs = [];
@@ -170,6 +171,7 @@ export function setupIngest({ state, dropEl, fileInput, docListEl, ingestBadge, 
 
   function renderUploads(){
     renderList({ uploads, docListEl, ingestBadge, testBadge, removeUpload });
+    notifyUploadsChange();
   }
 
   async function removeUpload(upload){
