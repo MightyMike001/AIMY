@@ -1,5 +1,6 @@
 import { MAX_MESSAGES } from './constants.js';
 import { normalizeCitations } from './utils/history.js';
+import { sanitizeRichContent } from '../js/security.js';
 
 const streamTextNodes = new WeakMap();
 const scheduledScrolls = new WeakMap();
@@ -166,7 +167,8 @@ export function addMessage(state, messagesEl, role, content, options = {}){
     bubble.classList.add('loading');
     appendLoader(contentEl);
   }else{
-    contentEl.textContent = typeof content === 'string' ? content : '';
+    const sanitized = sanitizeRichContent(typeof content === 'string' ? content : '');
+    contentEl.innerHTML = sanitized;
   }
   bubble.appendChild(contentEl);
 
@@ -228,6 +230,22 @@ export function appendStreamChunk(state, messagesEl, chunk){
     const current = state.messages[idx];
     current.content = (current.content || '') + chunk;
   }
+}
+
+export function finalizeAssistantMessage(state, messagesEl){
+  const bubble = findLastAssistantBubble(messagesEl);
+  if(!bubble){
+    return;
+  }
+  const contentEl = bubble.querySelector('.content');
+  if(!contentEl){
+    return;
+  }
+  const lastAssistantIndex = findLastAssistantIndex(state?.messages);
+  const rawContent = lastAssistantIndex > -1 && state.messages ? state.messages[lastAssistantIndex].content : '';
+  const sanitized = sanitizeRichContent(typeof rawContent === 'string' ? rawContent : '');
+  contentEl.innerHTML = sanitized;
+  streamTextNodes.delete(contentEl);
 }
 
 export function updateLastAssistantCitations(state, messagesEl, citations){
