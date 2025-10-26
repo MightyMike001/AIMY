@@ -2,85 +2,338 @@
 <html lang="nl">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' https:; font-src 'self'; base-uri 'self'; form-action 'self'" />
-  <meta http-equiv="Referrer-Policy" content="same-origin" />
-  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
-  <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=()" />
-  <title>AIMY – Chatgeschiedenis</title>
-  <meta name="description" content="Bewaar, open en archiveer eerdere AIMY-chats met serienummer en foutcodes." />
-  <link rel="stylesheet" href="css/tokens.css" />
-  <link rel="stylesheet" href="css/base.css" />
-  <link rel="stylesheet" href="css/components.css" />
-  <link rel="stylesheet" href="css/app.css" />
-  <link rel="stylesheet" href="css/history.css" />
+  <!-- Keyboard-safe viewport behaviour on iOS/iPadOS/Safari/Chrome -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
+  <title>TISAI</title>
+  <style>
+    /* ===== Design Tokens ===== */
+    :root{
+      --bg:#0b1626;
+      --panel:rgba(11,22,38,0.6);
+      --panel-strong:rgba(11,22,38,0.85);
+      --text:#f1f7ff;
+      --muted:#9fb2c9;
+      --accent:#a00020;
+      --hud:#00e5ff;
+      --hud-2:#14b3ff;
+      --shadow:0 12px 28px rgba(0,14,32,0.28);
+      --ring:0 0 0 2px rgba(0,229,255,0.22);
+      /* expose safe-area to JS */
+      --sab: env(safe-area-inset-bottom, 0px);
+      --sat: env(safe-area-inset-top, 0px);
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%; background:var(--bg); -webkit-text-size-adjust:100%; overscroll-behavior-y:contain;}
+    body{margin:0; color:var(--text); font:clamp(13px, 1vw + 10px, 16px)/1.6 "Inter","Roboto",system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif; touch-action:manipulation;}
+
+    /* ===== Background FX ===== */
+    .bgfx{position:fixed; inset:0; z-index:0; pointer-events:none}
+    .hudfx{position:fixed; inset:0; z-index:0; pointer-events:none; background:
+      radial-gradient(60% 40% at 50% 0%, rgba(0,229,255,.14), transparent 60%),
+      radial-gradient(120% 80% at 50% 120%, rgba(0,229,255,.08), transparent 60%)}
+    .hudfx::before{content:""; position:absolute; inset:0; opacity:.22; background-image:
+      repeating-linear-gradient(0deg, rgba(0,229,255,.06) 0 1px, transparent 1px 24px),
+      repeating-linear-gradient(90deg, rgba(0,229,255,.04) 0 1px, transparent 1px 24px)}
+    .hudfx::after{content:""; position:absolute; left:-50%; right:-50%; top:-200%; bottom:50%;
+      background:linear-gradient(to bottom, rgba(0,229,255,0) 0%, rgba(0,229,255,.08) 50%, rgba(0,229,255,0) 100%);
+      animation:sweep 7s linear infinite; mix-blend-mode:screen; opacity:.45}
+    @keyframes sweep{from{transform:translateY(0)} to{transform:translateY(300%)}}
+    @media (prefers-reduced-motion: reduce){ .hudfx::after{display:none} }
+
+    /* ===== App Frame ===== */
+    .app{min-height:100vh; min-height:100svh; min-height:100dvh; max-width:min(920px, 100%);
+         margin:0 auto; padding:0 clamp(8px, 4vw, 18px); position:relative; z-index:1;
+         background:var(--panel); backdrop-filter:blur(18px); border:1px solid rgba(255,255,255,.06); border-radius:clamp(14px, 4vw, 24px); box-shadow:0 24px 60px rgba(0,10,28,0.45);}
+    header{padding:clamp(10px, 2.2vw, 16px) 0 clamp(6px, 2vw, 10px); color:var(--muted); position:sticky; top:0; backdrop-filter:saturate(140%) blur(10px);
+      background:linear-gradient(180deg, rgba(11,22,38,.92), rgba(11,22,38,.15)); z-index:5; display:flex; align-items:center; justify-content:space-between; gap:clamp(8px, 2vw, 16px); box-shadow:0 6px 24px rgba(0,10,24,0.35)}
+    .title{font-weight:800; letter-spacing:.18em; text-transform:uppercase; font-size:clamp(12px, 1.4vw + 8px, 17px);
+      background:linear-gradient(90deg, var(--hud) 0%, #8be7ff 40%, var(--hud-2) 100%);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent}
+    .header-actions{display:flex; align-items:center; gap:clamp(8px, 2vw, 12px)}
+
+    /* ===== Chat Stream ===== */
+    .chat{position:relative; padding:clamp(6px, 1.2vw, 10px) 0 clamp(110px, 18vh, 150px);
+          overflow:auto; -webkit-overflow-scrolling:touch; overscroll-behavior-y:contain}
+    .msg{display:flex; gap:clamp(8px, 2vw, 12px); margin:clamp(8px, 2vw, 12px) 0; align-items:flex-start}
+    .avatar{flex:0 0 clamp(22px, 5vw, 30px); height:clamp(22px, 5vw, 30px); border-radius:clamp(8px, 2vw, 10px); display:grid; place-items:center; font-size:clamp(11px, 2.6vw, 13px);
+      background:linear-gradient(135deg,#0d1a2d,#081426); box-shadow:0 0 0 1px rgba(0,229,255,.25), 0 0 12px rgba(0,229,255,.2) inset; color:#8be7ff}
+    .bubble{max-width:86%; padding:clamp(8px, 2.4vw, 12px) clamp(10px, 3vw, 14px); border-radius:clamp(10px, 3.2vw, 14px); border:1px solid rgba(0,229,255,.18);
+      background:linear-gradient(160deg, var(--panel-strong), rgba(11,22,38,0.72)); box-shadow:0 0 0 1px rgba(0,229,255,.08) inset, 0 24px 32px rgba(4,14,28,.35); position:relative; word-break:break-word; overflow-wrap:anywhere}
+    .assistant .bubble{background:linear-gradient(160deg, rgba(11,22,38,0.88), rgba(11,22,38,0.7))}
+    .user .bubble{background:linear-gradient(160deg, rgba(14,30,50,0.9), rgba(11,22,38,0.68)); margin-left:auto}
+    .bubble::after{content:""; position:absolute; inset:-1px; border-radius:inherit; pointer-events:none; box-shadow:0 0 18px rgba(0,229,255,.12), inset 0 0 18px rgba(0,229,255,.04)}
+
+    /* Denser layout on small phones */
+    @media (max-width:420px){
+      .bubble{max-width:96%}
+      .avatar{display:none}
+      .chat{padding-bottom:calc(140px + env(safe-area-inset-bottom))}
+    }
+
+    /* ===== Composer ===== */
+    .composer{position:fixed; left:0; right:0; bottom:0; z-index:20; background:linear-gradient(180deg, rgba(11,22,38,.94), rgba(11,22,38,.98));
+      border-top:1px solid rgba(0,229,255,.18); padding:clamp(8px, 2.5vw, 12px) clamp(8px, 3vw, 12px) calc(clamp(8px, 2.5vw, 12px) + env(safe-area-inset-bottom))}
+    .composer .inner{max-width:min(920px, 100%); margin:0 auto; display:grid; grid-template-columns: 1fr auto; gap:clamp(6px, 2.4vw, 10px); align-items:end; padding:0 clamp(8px, 4vw, 14px); min-width:0}
+    textarea{flex:1; min-height:22px; max-height:200px; background:rgba(8,18,32,0.88); color:var(--text); border:1px solid rgba(0,229,255,.22); border-radius:clamp(10px, 3vw, 14px); padding:clamp(10px, 2.2vw, 12px) clamp(12px, 3vw, 14px); resize:vertical; outline:none; box-shadow:inset 0 0 18px rgba(0,229,255,.08); font-size:16px; min-width:0}
+    textarea:focus{box-shadow:inset 0 0 18px rgba(0,229,255,.14), var(--ring)}
+    .icon-btn{display:grid; place-items:center; padding:0 clamp(18px, 4vw, 24px); min-width:clamp(44px, 12vw, 120px); height:clamp(44px, 12vw, 54px); border-radius:4px; border:1px solid rgba(255,255,255,.12);
+      background:var(--accent); color:#fff; font-size:clamp(16px, 4vw, 20px); font-weight:600; cursor:pointer; box-shadow:0 8px 22px rgba(160,0,32,0.32); transition:box-shadow .2s ease, transform .2s ease}
+    .icon-btn:hover{box-shadow:0 12px 28px rgba(160,0,32,0.38)}
+    .icon-btn:active{transform:translateY(1px)}
+    .icon-btn span{line-height:1}
+    .send:disabled{opacity:.6; cursor:not-allowed; box-shadow:0 8px 22px rgba(160,0,32,0.32); transform:none}
+    .send:disabled:hover{box-shadow:0 8px 22px rgba(160,0,32,0.32)}
+    .reset{background:linear-gradient(160deg, rgba(160,0,32,0.92), rgba(120,0,24,0.92)); border-color:rgba(255,255,255,.18)}
+
+    /* One-column controls on tiny widths (iPhone SE down / split view) */
+    @media (max-width:360px){ .composer .inner{ grid-template-columns: 1fr auto; }
+    }
+
+    /* iPad & iMac niceties */
+    @media (min-width:1024px){
+      .app{max-width:min(980px, 92vw)}
+      .bubble{max-width:80%}
+      .composer .inner{gap:12px}
+    }
+
+    /* ===== Banner ===== */
+    .banner{display:none; margin:6px 14px 0; padding:10px 12px; border-radius:10px; background:rgba(160,0,32,.7); border:1px solid rgba(255,200,200,.4); color:#ffe6ea; box-shadow:0 12px 24px rgba(160,0,32,0.25)}
+    .banner.show{display:block}
+
+    /* Keyboard open hint (optional styling hook) */
+    .kb-open .composer{transition: bottom 120ms ease-out;}
+
+    /* Accessibility: prefers-contrast */
+    @media (prefers-contrast: more){
+      .bubble{border-color:#54e5ff}
+      .send{border-color:#54e5ff}
+    }
+
+    button,.send,.reset{-webkit-tap-highlight-color:transparent}
+    @supports (height: 100svh){ .app{ min-height:100svh } }
+    @supports (height: 100dvh){ .app{ min-height:100dvh } }
+  </style>
 </head>
-<body class="history-page" data-theme="dark">
-  <div id="aimy-page">
-    <div id="aimy-bg" aria-hidden="true">
-      <canvas id="aimy-protons" aria-hidden="true"></canvas>
+<body>
+  <canvas id="bgfx" class="bgfx" aria-hidden="true"></canvas>
+  <div id="hudfx" class="hudfx" aria-hidden="true"></div>
+  <div class="app" id="app" aria-label="TISAI Chat">
+    <header>
+      <div class="title">TISAI</div>
+      <div class="header-actions">
+        <button id="reset" class="icon-btn reset" title="Reset chat" aria-label="Reset chat"><span aria-hidden="true">↺</span></button>
+      </div>
+    </header>
+    <main id="chat" class="chat" aria-live="polite"></main>
+    <div id="banner" class="banner" role="alert"></div>
+  </div>
+
+  <div class="composer" role="form" aria-label="bericht versturen">
+    <div class="inner">
+      <textarea id="prompt" placeholder="Hallo, wat kan ik voor je doen?" inputmode="text" enterkeyhint="send" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
+      <button id="send" class="icon-btn send" disabled aria-label="Stuur bericht"><span aria-hidden="true">↑</span></button>
     </div>
+  </div>
 
-    <div class="page-shell">
-      <header class="site-header" role="banner">
-        <div class="app-header card glass">
-          <div class="app-brand">
-            <img
-              src="assets/DACCFAD1-BABC-4760-9110-77A1D5D402D2.png"
-              alt="AIMY-logo"
-              width="72"
-              height="72"
-              class="app-mark"
-              decoding="async"
-              fetchpriority="high"
-            />
-            <div class="app-copy">
-              <p class="app-eyebrow">Overzicht</p>
-              <h1 class="app-title">AIMY – Chatgeschiedenis</h1>
-              <p class="tiny">Bewaar, zoek, open en archiveer eerdere gesprekken.</p>
-            </div>
-          </div>
-          <nav class="app-actions" aria-label="Navigatie">
-            <a class="btn btn-ghost btn-small" href="prechat.html">Nieuwe werkbon</a>
-            <a class="btn btn-ghost btn-small" href="chat.html">Ga naar chat</a>
-          </nav>
-        </div>
-      </header>
+  <script>
+    /* ===== Background Particles (Jarvis-style, tuned for mobile) ===== */
+    (function(){
+      const c = document.getElementById('bgfx'); if(!c) return;
+      const ctx = c.getContext('2d');
+      let dpr = 1, W = 0, H = 0, particles = [], linkDist = 120, raf = null;
+      const PRIMARY = '#00E5FF';
+      const mqReduce = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-      <main class="history-layout" role="main">
-        <section class="card history-controls" aria-label="Zoek en filter">
-          <div class="history-controls-header">
-            <h2>Je opgeslagen chats</h2>
-            <p class="hint">Titels gebruiken altijd het serienummer en – indien aanwezig – foutcodes. Gebruik de zoekbalk om snel een chat te vinden.</p>
-          </div>
-          <div class="history-search">
-            <label class="sr-only" for="historySearch">Zoek op serienummer of foutcode</label>
-            <input id="historySearch" class="input" type="search" placeholder="Zoek op serienummer, foutcode of notities" autocomplete="off" />
-          </div>
-        </section>
+      function targetCount(area){
+        let base = Math.min(140, Math.max(40, Math.floor(area / 12000)));
+        if (window.matchMedia && window.matchMedia('(max-width: 600px)').matches) base = Math.min(base, 80);
+        if (mqReduce.matches) base = Math.max(12, Math.floor(base * 0.35));
+        return base;
+      }
+      function ensureCount(n){
+        if (particles.length < n){
+          const add = n - particles.length;
+          for(let i=0;i<add;i++){
+            particles.push({ x: Math.random()*W, y: Math.random()*H, vx: (Math.random()-0.5)*0.28*dpr, vy: (Math.random()-0.5)*0.28*dpr, r: (1.1 + Math.random()*1.6)*dpr });
+          }
+        } else if (particles.length > n){ particles.length = n; }
+      }
+      function resize(){
+        const prevW = W || 1, prevH = H || 1, prevDpr = dpr;
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const rect = c.getBoundingClientRect();
+        c.width = Math.max(1, Math.floor(rect.width * dpr));
+        c.height = Math.max(1, Math.floor(rect.height * dpr));
+        W = c.width; H = c.height;
+        const area = rect.width * rect.height;
+        const desired = targetCount(area);
+        const sx = W/prevW, sy = H/prevH, vScale = dpr/prevDpr;
+        for(const p of particles){ p.x*=sx; p.y*=sy; p.vx*=vScale; p.vy*=vScale; }
+        ensureCount(desired);
+        linkDist = Math.max(60, Math.min(200, Math.sqrt(area) / 7));
+      }
+      function frame(){
+        ctx.clearRect(0,0,W,H);
+        ctx.save(); ctx.globalCompositeOperation='lighter';
+        const move = !mqReduce.matches;
+        if (move){ for(const p of particles){ p.x+=p.vx; p.y+=p.vy; if(p.x<0||p.x>W) p.vx*=-1; if(p.y<0||p.y>H) p.vy*=-1; } }
+        const maxD = linkDist*dpr;
+        for(let i=0;i<particles.length;i++){
+          const p=particles[i];
+          for(let j=i+1;j<particles.length;j++){
+            const q=particles[j]; const dx=p.x-q.x, dy=p.y-q.y; const d=Math.hypot(dx,dy);
+            if(d < maxD){ const a = 1 - d/maxD; ctx.strokeStyle=`rgba(0,229,255,${a*0.3})`; ctx.lineWidth=Math.max(0.25*dpr, 0.8*dpr*a); ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y); ctx.stroke(); }
+          }
+        }
+        for(const p of particles){
+          const g = ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*3);
+          g.addColorStop(0,'rgba(0,240,255,0.6)'); g.addColorStop(1,'rgba(0,240,255,0)');
+          ctx.fillStyle=g; ctx.beginPath(); ctx.arc(p.x,p.y,p.r*3,0,Math.PI*2); ctx.fill();
+          ctx.fillStyle=PRIMARY; ctx.shadowColor='rgba(0,240,255,0.45)'; ctx.shadowBlur=6*dpr; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
+        }
+        ctx.restore(); if(!mqReduce.matches){ raf = requestAnimationFrame(frame); }
+      }
+      function start(){ cancelAnimationFrame(raf); frame(); }
+      resize(); start();
 
-        <section class="history-columns" aria-label="Overzicht van chats">
-          <article class="card history-section" aria-labelledby="activeChats">
-            <div class="history-section-header">
-              <h3 id="activeChats">Actieve chats</h3>
-              <span id="historyActiveCount" class="tiny"></span>
-            </div>
-            <div id="historyActiveList" class="history-list" role="list"></div>
-            <p id="historyEmptyActive" class="history-empty hint">Nog geen actieve chats opgeslagen.</p>
-          </article>
+      const ro = new ResizeObserver(()=>{ resize(); start(); });
+      ro.observe(document.body);
 
-          <article class="card history-section" aria-labelledby="archivedChats">
-            <div class="history-section-header">
-              <h3 id="archivedChats">Gearchiveerde chats</h3>
-              <span id="historyArchivedCount" class="tiny"></span>
-            </div>
-            <div id="historyArchivedList" class="history-list" role="list"></div>
-            <p id="historyEmptyArchived" class="history-empty hint">Geen gearchiveerde chats gevonden.</p>
-          </article>
-        </section>
-      </main>
-    </div>
+      window.addEventListener('resize', ()=>{ resize(); start(); }, {passive:true});
+      document.addEventListener('visibilitychange', ()=>{ if(document.hidden){ cancelAnimationFrame(raf); } else { start(); } });
+      if (mqReduce?.addEventListener) mqReduce.addEventListener('change', ()=>{ start(); }); else if (mqReduce?.addListener) mqReduce.addListener(()=>{ start(); });
+    })();
 
-  <script type="module" src="scripts/history-page.js"></script>
+    /* ===== Chat Logic ===== */
+    const chat = document.getElementById('chat');
+    const promptEl = document.getElementById('prompt');
+    const sendBtn = document.getElementById('send');
+    const resetBtn = document.getElementById('reset');
+    const banner = document.getElementById('banner');
+    const composer = document.querySelector('.composer');
+
+    const ENDPOINT = 'https://node01n8n.mit.rd-n.nl/webhook/aimy-chat';
+    const INITIAL_MESSAGE = 'Hallo, wat kan ik voor je doen?';
+
+    function esc(s){return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');}
+    function showBanner(msg){ banner.innerHTML = msg; banner.classList.add('show'); }
+    function hideBanner(){ banner.classList.remove('show'); banner.innerHTML=''; }
+
+    function parseReply(t){
+      if (t == null) return null;
+      try{
+        const j = JSON.parse(t);
+        const pick = [ j.answer, j.reply, j.message, j.text,
+          (j.choices && j.choices[0] && (j.choices[0].message && j.choices[0].message.content)) || (j.choices && j.choices[0] && j.choices[0].text),
+          (j.data && j.data.answer)
+        ].find(v => typeof v === 'string' && v.trim() !== '');
+        if (pick) return pick;
+        const vals = Object.values(j).filter(v => typeof v === 'string' && v.trim() !== '');
+        if (vals.length === 1) return vals[0];
+        return JSON.stringify(j, null, 2);
+      } catch{
+        const s = String(t);
+        return s.trim()==='' ? null : s;
+      }
+    }
+
+    function scrollToBottom(instant=false){ try{ chat.scrollTo({ top: chat.scrollHeight, behavior: instant ? 'auto' : 'smooth' }); } catch{ chat.scrollTop = chat.scrollHeight; } }
+
+    function rowEl(role, text){
+      role = role==='user' ? 'user' : 'assistant';
+      const div = document.createElement('div');
+      div.className = 'msg ' + role;
+      const html = esc(text).replace(/\n/g,'<br>');
+      div.innerHTML = `<div class="avatar ${role}">${role==='user'?'🧑':'★'}</div><div class="bubble">${html}</div>`;
+      return div;
+    }
+    function row(role, text){ chat.appendChild(rowEl(role, text)); requestAnimationFrame(()=>scrollToBottom()); }
+
+    // ---- Keyboard-aware layout (no more "dubbel toetsenbord") ----
+    function getSafeAreaBottom(){
+      const v = getComputedStyle(document.documentElement).getPropertyValue('--sab');
+      const n = parseFloat(v) || 0; return n;
+    }
+    function padForComposer(){
+      const h = composer.offsetHeight;
+      const extra = parseFloat(composer.style.bottom||'0');
+      chat.style.paddingBottom = (h + extra + 16) + 'px';
+    }
+
+    (function keyboardAware(){
+      const vv = window.visualViewport;
+      const sab = getSafeAreaBottom();
+      if(!vv){ padForComposer(); return; }
+      let raf = 0;
+      function apply(){
+        // Layout viewport height (excludes overlay keyboard if browser resizes content)
+        const layoutH = document.documentElement.clientHeight;
+        // Visible viewport bottom = visualViewport.height + top offset
+        const visibleBottom = vv.height + vv.offsetTop;
+        // Amount covered by overlay keyboard in pixels (>=0)
+        let covered = Math.max(0, Math.round(layoutH - visibleBottom));
+        // Ignore tiny jitters
+        if (covered < 2) covered = 0;
+        // Subtract safe-area bottom to avoid double spacing
+        const bottom = Math.max(0, covered - sab);
+        composer.style.bottom = bottom + 'px';
+        document.documentElement.classList.toggle('kb-open', bottom > 0);
+        padForComposer();
+        scrollToBottom(true);
+      }
+      function schedule(){ if(raf) return; raf = requestAnimationFrame(()=>{ raf=0; apply(); }); }
+      // Initial + changes (open/close, split view, stage manager, URL bar slide)
+      apply();
+      vv.addEventListener('resize', schedule, {passive:true});
+      vv.addEventListener('scroll', schedule, {passive:true});
+      window.addEventListener('orientationchange', schedule, {passive:true});
+      // Fallback for browsers firing only focus events
+      window.addEventListener('focusin', schedule);
+      window.addEventListener('focusout', schedule);
+    })();
+
+    // Base layout pass for non-visualViewport browsers
+    let layoutRAF = 0; function scheduleLayoutAdjust(immediate=false){ if(immediate){ if(layoutRAF){cancelAnimationFrame(layoutRAF); layoutRAF=0;} padForComposer(); scrollToBottom(true); return;} if(layoutRAF) return; layoutRAF = requestAnimationFrame(()=>{ layoutRAF=0; padForComposer(); scrollToBottom(true); }); }
+    scheduleLayoutAdjust(true);
+    window.addEventListener('resize', ()=>scheduleLayoutAdjust(false), {passive:true});
+    window.addEventListener('orientationchange', ()=>scheduleLayoutAdjust(false));
+
+    // Keep caret visible above keyboard on iOS
+    promptEl.addEventListener('focus', ()=>{ setTimeout(()=>scrollToBottom(true), 50); });
+
+    async function ask(text){
+      const ctrl = new AbortController(); const to = setTimeout(()=>ctrl.abort(), 12000);
+      try{
+        const res = await fetch(ENDPOINT, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({message:text}), signal: ctrl.signal });
+        if(!res.ok) throw new Error('HTTP '+res.status);
+        return parseReply(await res.text());
+      }catch(e){ showBanner('Kon geen verbinding maken of er ging iets mis. Probeer later opnieuw.'); return null; }
+      finally{ clearTimeout(to); }
+    }
+
+    async function send(){
+      const text = promptEl.value.trim(); if(!text) return; hideBanner(); sendBtn.disabled = true;
+      row('user', text); promptEl.value='';
+      const reply = await ask(text); if(reply !== null){ row('assistant', reply); }
+      sendBtn.disabled = false; promptEl.focus();
+    }
+
+    function resetChat(){ chat.innerHTML = ''; hideBanner(); promptEl.value = ''; onInput(); row('assistant', INITIAL_MESSAGE); scrollToBottom(true); }
+
+    const onInput = ()=>{ sendBtn.disabled = !promptEl.value.trim(); };
+    promptEl.addEventListener('input', onInput); onInput();
+    promptEl.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); send(); } });
+    sendBtn.addEventListener('click', send); resetBtn.addEventListener('click', resetChat);
+
+    // First message
+    row('assistant', INITIAL_MESSAGE);
+
+    // Smoke tests (optional): add ?test=1
+    (function runTests(){ const TEST_MODE = new URLSearchParams(location.search).has('test'); if(!TEST_MODE){ return; } const results=[]; const raw='<b>& test</b>'; const safe=esc(raw); results.push((/&lt;b&gt;&amp; test&lt;\/b&gt;/.test(safe)?'✅':'❌')+' esc() ontsmet HTML'); const before=chat.children.length; for(let i=0;i<3;i++){ chat.appendChild(rowEl('assistant','test '+i)); } const after=chat.children.length; const appended=after===before+3; const atBottom=Math.abs((chat.scrollHeight-chat.clientHeight)-chat.scrollTop)<4; results.push((appended?'✅':'❌')+' row() voegt berichten toe'); results.push((atBottom?'✅':'❌')+' sticky bottom actief'); promptEl.value='x'; promptEl.dispatchEvent(new Event('input')); const enabled=!sendBtn.disabled; promptEl.value=''; promptEl.dispatchEvent(new Event('input')); const disabledAgain=sendBtn.disabled; results.push(((enabled&&disabledAgain)?'✅':'❌')+' send-knop toggle op input'); const pr1=parseReply(JSON.stringify({reply:'ok1'})); const pr2=parseReply(JSON.stringify({message:'ok2'})); const pr3=parseReply('plain'); results.push(((pr1==='ok1'&&pr2==='ok2'&&pr3==='plain')?'✅':'❌')+' parseReply reply/message/plain'); const pr4 = parseReply(JSON.stringify({answer:'ok3'})); results.push(((pr4==='ok3')?'✅':'❌')+' parseReply answer'); const el = rowEl('assistant','a\nb'); const hasBr = /<br>/.test(el.innerHTML); results.push((hasBr?'✅':'❌')+' newline -> <br>'); const el2 = rowEl('x','y'); const safeRole = /msg assistant/.test(el2.className); results.push((safeRole?'✅':'❌')+' role whitelist'); const summary='Tests afgerond:\n'+results.join('\n'); row('assistant', summary); })();
+
+    window.addEventListener('error', ()=>showBanner('Er trad een fout op. Herlaad de pagina alstublieft.'));
+    window.addEventListener('unhandledrejection', ()=>showBanner('Er trad een fout op met de verbinding.'));
+  </script>
 </body>
 </html>
