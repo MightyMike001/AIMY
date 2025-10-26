@@ -181,7 +181,7 @@ textarea {
     radial-gradient(280px 280px at 92px 200px, rgba(148, 120, 255, 0.16), rgba(148, 120, 255, 0));
   background-size: 320px 320px, 420px 420px, 520px 520px;
   opacity: 0.5;
-  animation: proton-drift 48s linear infinite;
+  animation: none;
 }
 
 #aimy-bg::after {
@@ -192,7 +192,7 @@ textarea {
   background-size: 420px 420px, 520px 520px, 460px 460px;
   filter: blur(18px);
   opacity: 0.36;
-  animation: proton-drift-reverse 68s linear infinite;
+  animation: none;
 }
 
 #aimy-protons {
