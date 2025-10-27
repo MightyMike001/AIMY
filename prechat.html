@@ -131,7 +131,7 @@
 
   <div class="composer" role="form" aria-label="bericht versturen">
     <div class="inner">
-      <textarea id="prompt" placeholder="Hallo, wat kan ik voor je doen?" inputmode="text" enterkeyhint="send" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
+      <textarea id="prompt" placeholder="Stel een vraag" inputmode="text" enterkeyhint="send" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
       <button id="send" class="icon-btn send" disabled aria-label="Stuur bericht"><span aria-hidden="true">↑</span></button>
     </div>
   </div>
@@ -214,7 +214,7 @@
     const composer = document.querySelector('.composer');
 
     const ENDPOINT = 'https://node01n8n.mit.rd-n.nl/webhook/aimy-chat';
-    const INITIAL_MESSAGE = 'Hallo, wat kan ik voor je doen?';
+    const INITIAL_MESSAGE = 'Stel een vraag';
 
     function esc(s){return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');}
     function showBanner(msg){ banner.innerHTML = msg; banner.classList.add('show'); }
