@@ -155,6 +155,7 @@
 
     const ENDPOINT = 'https://node01n8n.mit.rd-n.nl/webhook/aimy-chat';
     const INITIAL_MESSAGE = 'Stel een vraag';
+    const REQUEST_TIMEOUT_MS = 45000; // allow long-running flows to complete before aborting
 
     function esc(s){return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');}
     function showBanner(msg){ banner.innerHTML = msg; banner.classList.add('show'); }
@@ -243,7 +244,8 @@
     promptEl.addEventListener('focus', ()=>{ setTimeout(()=>scrollToBottom(true), 50); });
 
     async function ask(text){
-      const ctrl = new AbortController(); const to = setTimeout(()=>ctrl.abort(), 12000);
+      const ctrl = new AbortController();
+      const to = setTimeout(()=>ctrl.abort(), REQUEST_TIMEOUT_MS);
       try{
         const res = await fetch(ENDPOINT, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({message:text}), signal: ctrl.signal });
         if(!res.ok) throw new Error('HTTP '+res.status);
