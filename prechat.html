@@ -47,9 +47,8 @@
          background:var(--panel); backdrop-filter:blur(18px); border:1px solid rgba(255,255,255,.06); border-radius:clamp(14px, 4vw, 24px); box-shadow:0 24px 60px rgba(0,10,28,0.45);}
     header{padding:clamp(10px, 2.2vw, 16px) 0 clamp(6px, 2vw, 10px); color:var(--muted); position:sticky; top:0; backdrop-filter:saturate(140%) blur(10px);
       background:linear-gradient(180deg, rgba(11,22,38,.92), rgba(11,22,38,.15)); z-index:5; display:flex; align-items:center; justify-content:space-between; gap:clamp(8px, 2vw, 16px); box-shadow:0 6px 24px rgba(0,10,24,0.35)}
-    .title{font-weight:800; letter-spacing:.18em; text-transform:uppercase; font-size:clamp(12px, 1.4vw + 8px, 17px);
-      background:linear-gradient(90deg, var(--hud) 0%, #8be7ff 40%, var(--hud-2) 100%);
-      -webkit-background-clip:text; -webkit-text-fill-color:transparent}
+    .title{display:flex; align-items:center; min-height:clamp(20px, 2vw + 14px, 32px)}
+    .title img{display:block; height:clamp(20px, 2vw + 14px, 32px); width:auto}
     .header-actions{display:flex; align-items:center; gap:clamp(8px, 2vw, 12px)}
 
     /* ===== Chat Stream ===== */
@@ -120,7 +119,7 @@
   <div id="hudfx" class="hudfx" aria-hidden="true"></div>
   <div class="app" id="app" aria-label="TISAI Chat">
     <header>
-      <div class="title">TISAI</div>
+      <div class="title"><img src="assets/DACCFAD1-BABC-4760-9110-77A1D5D402D2.png" alt="AIMY logo"></div>
       <div class="header-actions">
         <button id="reset" class="icon-btn reset" title="Reset chat" aria-label="Reset chat"><span aria-hidden="true">↺</span></button>
       </div>
