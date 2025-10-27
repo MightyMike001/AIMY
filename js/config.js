@@ -6,5 +6,5 @@ export const allowedTypes = Object.freeze([
   ['jpg', 'JPG'],
   ['jpeg', 'JPEG']
 ]);
-export const requestTimeoutMs = 45000;
+export const requestTimeoutMs = 60000;
 export const retries = 3;
