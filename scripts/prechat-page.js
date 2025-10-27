@@ -41,7 +41,7 @@ if(form){
       faultCodes: faultInput ? faultInput.value.trim() : ''
     };
     savePrechat(payload);
-    window.location.href = 'chat.html';
+    window.location.href = 'app.html';
   });
 }
 

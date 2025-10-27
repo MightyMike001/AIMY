@@ -347,7 +347,7 @@ function hydratePrechatState(){
   }
 
   if(!serial || !hours){
-    window.location.replace('prechat.html');
+    window.location.replace('app.html');
     return;
   }
 
