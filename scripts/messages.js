@@ -9,7 +9,7 @@ const loaderTemplate = typeof document !== 'undefined'
   ? (() => {
       const template = document.createElement('template');
       template.innerHTML = `
-        <div class="forklift-loader">
+        <div class="forklift-loader" role="status" aria-live="polite">
           <div class="forklift-scene" aria-hidden="true">
             <div class="forklift-track"></div>
             <div class="forklift-move">
@@ -24,7 +24,7 @@ const loaderTemplate = typeof document !== 'undefined'
               <div class="forklift-box"></div>
             </div>
           </div>
-          <span class="loader-text">AIMY is het antwoord aan het laden…</span>
+          <span class="loader-text">AIMY is aan het typen<span class="loader-dots" aria-hidden="true">…</span></span>
         </div>
       `;
       return template;
@@ -141,7 +141,7 @@ function appendLoader(contentEl){
   if(loaderTemplate){
     contentEl.appendChild(loaderTemplate.content.cloneNode(true));
   }else{
-    contentEl.textContent = 'AIMY is het antwoord aan het laden…';
+    contentEl.textContent = 'AIMY is aan het typen…';
   }
 }
 
