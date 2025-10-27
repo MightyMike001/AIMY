@@ -8,7 +8,7 @@
   <style>
     /* ===== Design Tokens ===== */
     :root{
-      --bg:#0b1626;
+      --bg:#0b0f14;
       --panel:rgba(11,22,38,0.6);
       --panel-strong:rgba(11,22,38,0.85);
       --text:#f1f7ff;
@@ -25,21 +25,28 @@
 
     *{box-sizing:border-box}
     html,body{height:100%; background:var(--bg); -webkit-text-size-adjust:100%; overscroll-behavior-y:contain;}
-    body{margin:0; color:var(--text); font:clamp(13px, 1vw + 10px, 16px)/1.6 "Inter","Roboto",system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif; touch-action:manipulation;}
+    body{margin:0; color:var(--text); font:clamp(13px, 1vw + 10px, 16px)/1.6 "Inter","Roboto",system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif; touch-action:manipulation; position:relative;}
 
     /* ===== Background FX ===== */
-    .bgfx{position:fixed; inset:0; z-index:0; pointer-events:none; display:block; width:100%; height:100%}
-    .hudfx{position:fixed; inset:0; z-index:0; pointer-events:none; background:
-      radial-gradient(60% 40% at 50% 0%, rgba(0,229,255,.14), transparent 60%),
-      radial-gradient(120% 80% at 50% 120%, rgba(0,229,255,.08), transparent 60%)}
-    .hudfx::before{content:""; position:absolute; inset:0; opacity:.22; background-image:
-      repeating-linear-gradient(0deg, rgba(0,229,255,.06) 0 1px, transparent 1px 24px),
-      repeating-linear-gradient(90deg, rgba(0,229,255,.04) 0 1px, transparent 1px 24px)}
-    .hudfx::after{content:""; position:absolute; left:-50%; right:-50%; top:-200%; bottom:50%;
-      background:linear-gradient(to bottom, rgba(0,229,255,0) 0%, rgba(0,229,255,.08) 50%, rgba(0,229,255,0) 100%);
-      animation:sweep 7s linear infinite; mix-blend-mode:screen; opacity:.45}
-    @keyframes sweep{from{transform:translateY(0)} to{transform:translateY(300%)}}
-    @media (prefers-reduced-motion: reduce){ .hudfx::after{display:none} }
+    #aimy-bg{position:fixed; inset:0; pointer-events:none; overflow:hidden; background:transparent; z-index:0; isolation:isolate;}
+    #aimy-bg::before,
+    #aimy-bg::after{content:""; position:absolute; inset:-20%; pointer-events:none; mix-blend-mode:screen; z-index:1;}
+    #aimy-bg::before{background-image:
+      radial-gradient(180px 180px at 32px 48px, rgba(94,210,255,0.18), rgba(94,210,255,0)),
+      radial-gradient(240px 240px at 160px 120px, rgba(255,112,204,0.14), rgba(255,112,204,0)),
+      radial-gradient(280px 280px at 92px 200px, rgba(148,120,255,0.16), rgba(148,120,255,0));
+      background-size:320px 320px, 420px 420px, 520px 520px;
+      opacity:0.5;
+    }
+    #aimy-bg::after{background-image:
+      radial-gradient(220px 220px at 180px 60px, rgba(64,188,255,0.12), rgba(64,188,255,0)),
+      radial-gradient(260px 260px at 80px 200px, rgba(255,142,206,0.12), rgba(255,142,206,0)),
+      radial-gradient(240px 240px at 200px 220px, rgba(124,96,255,0.12), rgba(124,96,255,0));
+      background-size:420px 420px, 520px 520px, 460px 460px;
+      filter:blur(18px);
+      opacity:0.36;
+    }
+    #aimy-protons{position:absolute; inset:0; width:100%; height:100%; display:block;}
 
     /* ===== App Frame ===== */
     .app{min-height:100vh; min-height:100svh; min-height:100dvh; max-width:min(920px, 100%);
@@ -115,8 +122,9 @@
   </style>
 </head>
 <body>
-  <canvas id="bgfx" class="bgfx" aria-hidden="true"></canvas>
-  <div id="hudfx" class="hudfx" aria-hidden="true"></div>
+  <div id="aimy-bg" aria-hidden="true">
+    <canvas id="aimy-protons" aria-hidden="true"></canvas>
+  </div>
   <div class="app" id="app" aria-label="TISAI Chat">
     <header>
       <div class="title"><img src="assets/DACCFAD1-BABC-4760-9110-77A1D5D402D2.png" alt="AIMY logo"></div>
@@ -135,75 +143,8 @@
     </div>
   </div>
 
+  <script type="module" src="scripts/background.js"></script>
   <script>
-    /* ===== Background Particles (Jarvis-style, tuned for mobile) ===== */
-    (function(){
-      const c = document.getElementById('bgfx'); if(!c) return;
-      const ctx = c.getContext('2d');
-      let dpr = 1, W = 0, H = 0, particles = [], linkDist = 120, raf = null;
-      const PRIMARY = '#00E5FF';
-      const mqReduce = window.matchMedia('(prefers-reduced-motion: reduce)');
-
-      function targetCount(area){
-        let base = Math.min(140, Math.max(40, Math.floor(area / 12000)));
-        if (window.matchMedia && window.matchMedia('(max-width: 600px)').matches) base = Math.min(base, 80);
-        if (mqReduce.matches) base = Math.max(12, Math.floor(base * 0.35));
-        return base;
-      }
-      function ensureCount(n){
-        if (particles.length < n){
-          const add = n - particles.length;
-          for(let i=0;i<add;i++){
-            particles.push({ x: Math.random()*W, y: Math.random()*H, vx: (Math.random()-0.5)*0.28*dpr, vy: (Math.random()-0.5)*0.28*dpr, r: (1.1 + Math.random()*1.6)*dpr });
-          }
-        } else if (particles.length > n){ particles.length = n; }
-      }
-      function resize(){
-        const prevW = W || 1, prevH = H || 1, prevDpr = dpr;
-        dpr = Math.min(window.devicePixelRatio || 1, 2);
-        const rect = c.getBoundingClientRect();
-        c.width = Math.max(1, Math.floor(rect.width * dpr));
-        c.height = Math.max(1, Math.floor(rect.height * dpr));
-        W = c.width; H = c.height;
-        const area = rect.width * rect.height;
-        const desired = targetCount(area);
-        const sx = W/prevW, sy = H/prevH, vScale = dpr/prevDpr;
-        for(const p of particles){ p.x*=sx; p.y*=sy; p.vx*=vScale; p.vy*=vScale; }
-        ensureCount(desired);
-        linkDist = Math.max(60, Math.min(200, Math.sqrt(area) / 7));
-      }
-      function frame(){
-        ctx.clearRect(0,0,W,H);
-        ctx.save(); ctx.globalCompositeOperation='lighter';
-        const move = !mqReduce.matches;
-        if (move){ for(const p of particles){ p.x+=p.vx; p.y+=p.vy; if(p.x<0||p.x>W) p.vx*=-1; if(p.y<0||p.y>H) p.vy*=-1; } }
-        const maxD = linkDist*dpr;
-        for(let i=0;i<particles.length;i++){
-          const p=particles[i];
-          for(let j=i+1;j<particles.length;j++){
-            const q=particles[j]; const dx=p.x-q.x, dy=p.y-q.y; const d=Math.hypot(dx,dy);
-            if(d < maxD){ const a = 1 - d/maxD; ctx.strokeStyle=`rgba(0,229,255,${a*0.3})`; ctx.lineWidth=Math.max(0.25*dpr, 0.8*dpr*a); ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y); ctx.stroke(); }
-          }
-        }
-        for(const p of particles){
-          const g = ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*3);
-          g.addColorStop(0,'rgba(0,240,255,0.6)'); g.addColorStop(1,'rgba(0,240,255,0)');
-          ctx.fillStyle=g; ctx.beginPath(); ctx.arc(p.x,p.y,p.r*3,0,Math.PI*2); ctx.fill();
-          ctx.fillStyle=PRIMARY; ctx.shadowColor='rgba(0,240,255,0.45)'; ctx.shadowBlur=6*dpr; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
-        }
-        ctx.restore(); if(!mqReduce.matches){ raf = requestAnimationFrame(frame); }
-      }
-      function start(){ cancelAnimationFrame(raf); frame(); }
-      resize(); start();
-
-      const ro = new ResizeObserver(()=>{ resize(); start(); });
-      ro.observe(document.body);
-
-      window.addEventListener('resize', ()=>{ resize(); start(); }, {passive:true});
-      document.addEventListener('visibilitychange', ()=>{ if(document.hidden){ cancelAnimationFrame(raf); } else { start(); } });
-      if (mqReduce?.addEventListener) mqReduce.addEventListener('change', ()=>{ start(); }); else if (mqReduce?.addListener) mqReduce.addListener(()=>{ start(); });
-    })();
-
     /* ===== Chat Logic ===== */
     const chat = document.getElementById('chat');
     const promptEl = document.getElementById('prompt');
