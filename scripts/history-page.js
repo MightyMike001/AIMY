@@ -201,7 +201,7 @@ function openChat(item){
     faultCodes: item.faultCodes || ''
   });
   markChatOpened(item.id);
-  window.location.href = 'chat.html';
+  window.location.href = 'app.html';
 }
 
 function toggleEmpty(el, show){
